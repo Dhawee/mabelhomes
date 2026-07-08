@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply font-body text-text bg-white dark:bg-navy dark:text-white antialiased;
+  }
+
+  ::selection {
+    @apply bg-gold/30 text-navy;
+  }
+}
+
+@layer components {
+  .section-padding {
+    @apply px-6 md:px-12 lg:px-20 xl:px-32 py-20 md:py-28;
+  }
+
+  .section-heading {
+    @apply font-heading text-4xl md:text-5xl lg:text-6xl font-light tracking-tight text-navy dark:text-white;
+  }
+
+  .section-subheading {
+    @apply text-gold uppercase tracking-[0.2em] text-sm font-semibold mb-4;
+  }
+
+  .luxury-card {
+    @apply bg-white dark:bg-navy/50 rounded-2xl shadow-luxury border border-gray-100/50 dark:border-white/5 overflow-hidden transition-all duration-500;
+  }
+
+  .glass-nav {
+    @apply backdrop-blur-xl bg-white/80 dark:bg-navy/80 border-b border-gray-100/50 dark:border-white/5;
+  }
+
+  .btn-gold {
+    @apply inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-gold text-white font-semibold rounded-full transition-all duration-300 hover:bg-gold-light hover:shadow-gold hover:scale-[1.02] active:scale-[0.98];
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 px-8 py-3.5 border-2 border-navy dark:border-white text-navy dark:text-white font-semibold rounded-full transition-all duration-300 hover:bg-navy hover:text-white dark:hover:bg-white dark:hover:text-navy;
+  }
+
+  .btn-outline-gold {
+    @apply inline-flex items-center justify-center gap-2 px-8 py-3.5 border-2 border-gold text-gold font-semibold rounded-full transition-all duration-300 hover:bg-gold hover:text-white;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
