@@ -4,7 +4,7 @@ import FadeIn from "@/components/ui/FadeIn";
 
 export default function WhyInvest() {
   return (
-    <section className="section-padding bg-white border-b border-gray-100 dark:bg-navy/20 dark:border-white/5">
+    <section className="section-padding bg-soft border-b border-gray-100 dark:bg-navy/20 dark:border-white/5">
       <div className="max-w-7xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           <FadeIn direction="left">

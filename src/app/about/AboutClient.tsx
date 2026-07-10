@@ -16,16 +16,6 @@ const certifications = [
 
 const milestones = [
   {
-    year: "2014",
-    title: "Professional Debut",
-    description: "Launched her professional real estate journey in the Lagos premium brokerage sector.",
-  },
-  {
-    year: "2017",
-    title: "Licensing & Credentials",
-    description: "Certified as a Licensed Real Estate Broker and Professional Property Manager in Lagos State.",
-  },
-  {
     year: "2021",
     title: "Portfolio Development",
     description: "Helped multiple corporate and private clients build high-performing luxury portfolios.",
@@ -33,12 +23,12 @@ const milestones = [
   {
     year: "2024",
     title: "Client Service Distinction",
-    description: "Honored with the Excellence in Client Service Award as transactions topped ₦4 billion.",
+    description: "Honored with the Excellence in Client Service Award as transactions topped ₦3 billion.",
   },
   {
     year: "2025",
     title: "Lagos Top Broker Award",
-    description: "Awarded Top Performing Broker at the Lagos Real Estate Awards with over 500+ successful transactions.",
+    description: "Awarded Top Performing Broker at the Lagos Real Estate Awards with over 120+ successful transactions.",
   },
 ];
 
@@ -105,15 +95,15 @@ export default function AboutClient() {
             </h2>
             <div className="space-y-4 text-navy/70 dark:text-white/70 leading-relaxed">
               <p>
-                Aluko Olajumoke O. is a distinguished Real Estate Broker and Consultant
-                with over 12 years of experience in Nigeria&apos;s premium property market.
+                Aluko Olajumoke .O is a distinguished Real Estate Broker and Consultant
+                with over 6 years of experience in Nigeria&apos;s premium property market.
                 Specializing in luxury residential and commercial properties across Lagos
                 and Abuja, she has built a reputation for integrity, expertise, and
                 exceptional client service.
               </p>
               <p>
-                As a leading broker at Mabel Homes & Investment, Olajumoke has facilitated
-                transactions worth over ₦5 billion, helping families find their dream homes
+                As a leading broker at Mabel Homes and Investment Limited, Olajumoke has facilitated
+                transactions worth over ₦3 billion, helping families find their dream homes
                 and investors build profitable portfolios. Her deep understanding of market
                 dynamics, combined with a client-first approach, ensures every transaction
                 is handled with the utmost professionalism.

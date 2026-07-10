@@ -2,99 +2,76 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Star } from "lucide-react";
 import { motion } from "framer-motion";
-import { SITE } from "@/data/site";
 
 export default function Hero() {
   return (
-    <section className="relative bg-white dark:bg-navy pt-20 overflow-hidden">
-      {/* 2 inches of separation from the Nav Bar = pt-48 (192px) */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 w-full pt-48 pb-20 md:pt-56">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <div>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="text-gold uppercase tracking-[0.2em] text-sm font-semibold mb-6"
-            >
-              {SITE.title}
-            </motion.p>
+    <section className="relative bg-navy pt-20 overflow-hidden min-h-[85vh] flex flex-col justify-center">
+      {/* Background Image with Dark Blue/Navy Gradient Overlay */}
+      <div className="absolute inset-0 w-full h-full z-0">
+        <Image
+          src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920&q=95" // Luxury modern home exterior at dusk
+          alt="Mabel Homes Premium Real Estate Background"
+          fill
+          priority
+          className="object-cover"
+        />
+        {/* Navy/Blue Gradient Overlay - matching the dark left / clear right look of the screenshot */}
+        <div className="absolute inset-0 bg-navy/60 dark:bg-navy/75 mix-blend-multiply" />
+        <div className="absolute inset-0 bg-gradient-to-r from-navy via-navy/90 to-transparent hidden lg:block" />
+        <div className="absolute inset-0 bg-gradient-to-t from-navy/90 via-navy/40 to-transparent lg:hidden" />
+      </div>
 
-            <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.5 }}
-              className="font-heading text-5xl md:text-6xl lg:text-7xl text-navy dark:text-white font-light leading-[1.1] mb-8"
-            >
-              Helping You Buy,
-              <br />
-              Sell &amp;
-              <br />
-              <span className="text-gold">Invest With Confidence.</span>
-            </motion.h1>
-
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.7 }}
-              className="text-navy/70 dark:text-white/70 text-lg max-w-lg mb-10 leading-relaxed"
-            >
-              Helping families, professionals and investors find exceptional real
-              estate opportunities with trusted guidance and unmatched market expertise.
-            </motion.p>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.9 }}
-              className="flex flex-wrap gap-4"
-            >
-              <Link href="/contact" className="btn-gold">
-                Book Consultation
-              </Link>
-              <Link href="/properties" className="btn-outline">
-                View Properties
-              </Link>
-            </motion.div>
-          </div>
-
+      {/* Hero Content Area */}
+      <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 w-full pt-32 pb-32 md:pt-48 md:pb-48">
+        <div className="max-w-2xl text-left text-white">
+          {/* Subtitle with trailing horizontal line */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, delay: 0.6 }}
-            className="relative hidden lg:block"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="flex items-center gap-3 mb-6"
           >
-            <div className="relative w-[400px] h-[500px] mx-auto">
-              <div className="absolute inset-0 rounded-3xl overflow-hidden shadow-luxury-lg border border-gray-100 dark:border-white/5">
-                <Image
-                  src="/images/olajumoke-1.jpg"
-                  alt={SITE.name}
-                  fill
-                  className="object-cover object-top"
-                  sizes="400px"
-                  priority
-                />
-              </div>
+            <span className="text-gold uppercase tracking-[0.25em] text-xs md:text-sm font-bold font-heading">
+              FIND YOUR DREAM HOME
+            </span>
+            <div className="w-16 h-[2px] bg-gold" />
+          </motion.div>
+          
+          {/* Heading */}
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="font-heading text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light leading-[1.15] mb-6 tracking-tight"
+          >
+            Find A Perfect <br />
+            <span className="text-gold font-normal">Home</span> To Live With
+          </motion.h1>
 
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 1.2 }}
-                className="absolute -bottom-6 -left-8 bg-white dark:bg-navy rounded-2xl p-5 shadow-luxury border border-gray-100 dark:border-white/5"
-              >
-                <div className="flex items-center gap-1 mb-2">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} size={14} className="fill-gold text-gold" />
-                  ))}
-                </div>
-                <p className="font-semibold text-navy dark:text-white text-sm">
-                  Trusted Realtor
-                </p>
-                <p className="text-gold text-xs mt-1">{SITE.company}</p>
-              </motion.div>
-            </div>
+          {/* Description */}
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+            className="text-white/80 text-base md:text-lg mb-10 leading-relaxed font-body max-w-lg"
+          >
+            We help you find the best property that suits your lifestyle and budget. Your dream home is just a click away.
+          </motion.p>
+
+          {/* Action Buttons */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+            className="flex flex-wrap gap-4"
+          >
+            <Link href="/properties" className="btn-gold shadow-gold font-heading text-sm px-8 py-4 flex items-center gap-2">
+              EXPLORE PROPERTIES <span className="text-lg">→</span>
+            </Link>
+            <Link href="/contact" className="btn-outline border-white text-white hover:bg-white hover:text-navy font-heading text-sm px-8 py-4 flex items-center gap-2">
+              CONTACT US <span className="text-lg">→</span>
+            </Link>
           </motion.div>
         </div>
       </div>

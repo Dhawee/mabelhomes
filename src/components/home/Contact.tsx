@@ -156,6 +156,7 @@ export default function Contact() {
                   <option>Selling Property</option>
                   <option>Investment Consultation</option>
                   <option>Property Inspection</option>
+                  <option>Shortlets</option>
                   <option>Other</option>
                 </select>
                 <textarea

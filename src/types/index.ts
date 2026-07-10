@@ -8,7 +8,7 @@ export interface Property {
   bedrooms: number;
   bathrooms: number;
   sqft: number;
-  status: "For Sale" | "For Rent" | "Sold" | "Under Offer";
+  status: "For Sale" | "For Rent" | "Sold" | "Under Offer" | "Shortlet";
   type: "Duplex" | "Apartment" | "Mansion" | "Land" | "Commercial" | "Terrace";
   featured: boolean;
   luxury: boolean;
@@ -20,6 +20,9 @@ export interface Property {
   parking?: number;
   videoTour?: string;
   coordinates: { lat: number; lng: number };
+  buildingApproval?: string;
+  survey?: string;
+  documentTitle?: string;
 }
 
 export interface Testimonial {
@@ -30,17 +33,6 @@ export interface Testimonial {
   review: string;
   image: string;
   service: string;
-}
-
-export interface BlogPost {
-  id: string;
-  slug: string;
-  title: string;
-  excerpt: string;
-  category: string;
-  image: string;
-  date: string;
-  readTime: string;
 }
 
 export interface FAQ {

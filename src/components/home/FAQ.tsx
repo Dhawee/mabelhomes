@@ -11,7 +11,7 @@ export default function FAQ() {
   const categories = [...new Set(FAQS.map((f) => f.category))];
 
   return (
-    <section className="section-padding bg-white border-b border-gray-100 dark:bg-navy/20 dark:border-white/5">
+    <section className="section-padding bg-soft border-b border-gray-100 dark:bg-navy/20 dark:border-white/5">
       <div className="max-w-3xl mx-auto">
         <FadeIn className="text-center mb-16">
           <p className="section-subheading">FAQ</p>

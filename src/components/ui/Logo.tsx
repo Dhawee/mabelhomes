@@ -22,7 +22,7 @@ export default function Logo({
   const image = (
     <Image
       src="/mabel-homes-logo.png"
-      alt="Mabel Homes & Investment"
+      alt="Mabel Homes and Investment Limited"
       width={width}
       height={height}
       className={cn("object-contain object-left", className)}

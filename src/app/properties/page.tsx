@@ -9,7 +9,7 @@ import FadeIn from "@/components/ui/FadeIn";
 
 function PropertiesContent() {
   const searchParams = useSearchParams();
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(searchParams.get("search") || "");
   const [location, setLocation] = useState(searchParams.get("location") || "");
   const [type, setType] = useState(searchParams.get("type") || "");
   const [status, setStatus] = useState(searchParams.get("status") || "");

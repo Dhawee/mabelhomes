@@ -121,6 +121,34 @@ export default async function PropertyDetailPage({ params }: Props) {
               </div>
             </FadeIn>
 
+            {(property.buildingApproval || property.survey || property.documentTitle) && (
+              <FadeIn delay={0.25}>
+                <div className="p-6 rounded-2xl bg-gold/5 border border-gold/20">
+                  <h3 className="font-heading text-lg text-navy dark:text-white mb-4 font-normal">Legal & Documentation Status</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {property.buildingApproval && (
+                      <div>
+                        <p className="text-xs text-navy/50 dark:text-white/50 uppercase tracking-wider mb-1">Building Approval</p>
+                        <p className="text-sm font-semibold text-navy dark:text-white">{property.buildingApproval}</p>
+                      </div>
+                    )}
+                    {property.survey && (
+                      <div>
+                        <p className="text-xs text-navy/50 dark:text-white/50 uppercase tracking-wider mb-1">Survey</p>
+                        <p className="text-sm font-semibold text-navy dark:text-white">{property.survey}</p>
+                      </div>
+                    )}
+                    {property.documentTitle && (
+                      <div>
+                        <p className="text-xs text-navy/50 dark:text-white/50 uppercase tracking-wider mb-1">Title / Document</p>
+                        <p className="text-sm font-semibold text-navy dark:text-white">{property.documentTitle}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </FadeIn>
+            )}
+
             <FadeIn delay={0.3}>
               <div>
                 <h2 className="font-heading text-2xl text-navy dark:text-white mb-4">Features</h2>
@@ -170,13 +198,12 @@ export default async function PropertyDetailPage({ params }: Props) {
             <FadeIn delay={0.2}>
               <div className="luxury-card p-6">
                 <div className="flex items-center gap-4 mb-6">
-                  <div className="w-16 h-16 rounded-full overflow-hidden">
+                  <div className="w-16 h-16 rounded-full overflow-hidden relative">
                     <Image
-                      src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&q=80"
+                      src="/images/olajumoke-1.jpg"
                       alt={SITE.name}
-                      width={64}
-                      height={64}
-                      className="object-cover"
+                      fill
+                      className="object-cover object-top"
                     />
                   </div>
                   <div>

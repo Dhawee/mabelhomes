@@ -1,16 +1,16 @@
 import { Property, Testimonial, FAQ, Service } from "@/types";
 
 export const SITE = {
-  name: "Aluko Olajumoke O.",
+  name: "Aluko Olajumoke .O",
   title: "Real Estate Broker & Consultant",
-  company: "Mabel Homes & Investment",
+  company: "Mabel Homes and Investment Limited",
   phone: ["+234 904 424 2443", "+234 706 371 1532"],
   email: "olajumoke@mabelhomes.org",
   website: "www.mabelhomes.org",
   whatsapp: "2347063711532",
   address: "Lagos, Nigeria",
   social: {
-    instagram: "https://instagram.com/mabelhomes",
+    instagram: "https://www.instagram.com/mabel.homes?igsh=eDV6a2liZmR3cmhj&utm_source=qr",
     facebook: "https://facebook.com/mabelhomes",
     linkedin: "https://linkedin.com/company/mabelhomes",
     twitter: "https://twitter.com/mabelhomes",
@@ -18,53 +18,114 @@ export const SITE = {
 };
 
 export const STATS = [
-  { label: "Properties Sold", value: 150, suffix: "+" },
-  { label: "Clients Served", value: 300, suffix: "+" },
-  { label: "Years Experience", value: 12, suffix: "+" },
-  { label: "Investment Value", value: 5, suffix: "B+", prefix: "₦" },
+  { label: "Properties Sold", value: 120, suffix: "+" },
+  { label: "Clients Served", value: 180, suffix: "+" },
+  { label: "Years Experience", value: 6, suffix: "+" },
+  { label: "Investment Value", value: 3, suffix: "B+", prefix: "₦" },
 ];
 
 export const PROPERTIES: Property[] = [
   {
     id: "1",
-    slug: "luxury-penthouse-lekki",
-    title: "Luxury Penthouse with Ocean Views",
-    location: "Lekki Phase 1, Lagos",
+    slug: "5-bedroom-fully-detached-home-chevron-lagos",
+    title: "5 Bedroom Fully Detached Home for Sale",
+    location: "Chevron, Lagos",
     city: "Lagos",
-    price: 450000000,
+    price: 900000000,
     bedrooms: 5,
     bathrooms: 6,
-    sqft: 6500,
+    sqft: 6800,
     status: "For Sale",
-    type: "Apartment",
+    type: "Mansion",
     featured: true,
     luxury: true,
     images: [
       "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1200&q=80",
-      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=80",
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80",
       "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&q=80",
       "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=1200&q=80",
     ],
     description:
-      "An exceptional penthouse offering panoramic ocean views, bespoke finishes, and world-class amenities in the heart of Lekki Phase 1. This residence represents the pinnacle of luxury living in Lagos.",
+      "This exceptional 5 bedroom fully detached home is situated in the premium Chevron enclave of Lekki, Lagos. Offering an unparalleled mix of modern design, high ceilings, family lounge, private cinema, home gym, and elevator, it is built for comfort and premium luxury.",
+    buildingApproval: "Available",
+    survey: "Registered Survey (Available on Request)",
+    documentTitle: "Governor's Consent",
     features: [
-      "Panoramic ocean views",
-      "Private elevator access",
-      "Smart home automation",
-      "Italian marble flooring",
-      "Chef's kitchen with premium appliances",
-      "Master suite with walk-in closet",
+      "Modern Design",
+      "All Rooms Ensuite",
+      "Spotlights",
+      "Fully Fitted Kitchen",
+      "Chandeliers",
+      "Dining Area",
+      "Interlocked Streets",
+      "Modern Structure",
+      "Family Lounge",
+      "Concrete Floor",
+      "Balconies",
+      "Swimming Pool",
+      "Cinema",
+      "Study Room",
+      "Gym",
+      "Elevator",
+      "Secure Estate (Call to Access)",
+      "Bluetooth Speakers",
+      "Outdoor Lights",
+      "BQ",
+      "Spacious Rooms",
+      "Closets",
+      "Water Heaters",
+      "Water Closets",
+      "Walk-in Closet",
+      "Walk-in Showers",
+      "Bath Tub",
     ],
     amenities: [
       "Swimming pool",
       "Gym & spa",
+      "Private Cinema",
+      "Elevator & Study Room",
+      "24/7 Power & Water",
+      "Secure Estate Access Control",
+    ],
+    yearBuilt: 2025,
+    parking: 4,
+    coordinates: { lat: 6.4388, lng: 3.5218 },
+  },
+  {
+    id: "rosebowl-shortlet-1",
+    slug: "rosebowl-luxury-apartment-lekki",
+    title: "Rosebowl Luxury Shortlet Suite",
+    location: "Lekki Phase 1, Lagos",
+    city: "Lagos",
+    price: 150000,
+    bedrooms: 2,
+    bathrooms: 2,
+    sqft: 1800,
+    status: "Shortlet",
+    type: "Apartment",
+    featured: true,
+    luxury: true,
+    images: [
+      "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=1200&q=80",
+      "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=1200&q=80",
+    ],
+    description:
+      "An elegant, fully serviced 2-bedroom shortlet suite managed by Rosebowl Apartments, a subsidiary of Mabel Homes and Investment Limited. Features high-speed Wi-Fi, 24/7 power, premium DSTV, and custom concierge services.",
+    features: [
+      "24/7 Power Supply & High-Speed Wi-Fi",
+      "Fully Furnished Modern Kitchen",
+      "Smart TVs & DSTV Streaming Package",
+      "Regular Housekeeping & Cleaning",
+      "Dedicated On-site Support Staff",
+    ],
+    amenities: [
+      "Swimming pool",
       "24/7 security",
       "Backup power",
-      "Underground parking",
-      "Concierge service",
+      "Parking garage",
     ],
-    yearBuilt: 2023,
-    parking: 3,
+    yearBuilt: 2024,
+    parking: 2,
     coordinates: { lat: 6.4474, lng: 3.4723 },
   },
   {
@@ -279,7 +340,7 @@ export const TESTIMONIALS: Testimonial[] = [
     location: "Lekki, Lagos",
     rating: 5,
     review:
-      "Olajumoke made our first home purchase seamless. Her knowledge of the Lagos market and attention to detail gave us complete confidence throughout the process.",
+      "Mabel Homes made our first home purchase seamless. Their knowledge of the Lagos market and attention to detail gave us complete confidence throughout the process.",
     image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&q=80",
     service: "Home Purchase",
   },
@@ -289,7 +350,7 @@ export const TESTIMONIALS: Testimonial[] = [
     location: "Victoria Island, Lagos",
     rating: 5,
     review:
-      "As an investor, I needed someone who understood ROI and market trends. Olajumoke delivered exceptional advisory services and helped me acquire three premium properties.",
+      "As an investor, I needed someone who understood ROI and market trends. Mabel Homes delivered exceptional advisory services and helped me acquire three premium properties.",
     image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&q=80",
     service: "Investment Advisory",
   },
@@ -561,6 +622,34 @@ export const SERVICES: Service[] = [
       "Clear Financial Reporting & Auditing"
     ]
   },
+  {
+    id: "8",
+    slug: "shortlet-apartments",
+    title: "Shortlet Apartments",
+    description:
+      "Premium fully-serviced luxury accommodations managed by Rosebowl Apartments.",
+    icon: "Key",
+    features: [
+      "24/7 Power Supply & High-Speed Wi-Fi",
+      "Regular Housekeeping & Laundry Services",
+      "Fully Furnished & Equipped Spaces",
+      "Prime, Secure Locations in Lagos",
+    ],
+    longDescription: "Rosebowl Apartments, a premier subsidiary of Mabel Homes and Investment Limited, specializes in managing luxury, fully-serviced shortlet apartments. Designed to provide travelers, professionals, and families with hotel-grade luxury combined with the security and comfort of a home, our properties offer premium amenities, high-speed internet, and around-the-clock concierge services.",
+    process: [
+      { title: "Select & Reserve", description: "Choose from our curated listings of verified properties on Instagram or our search portal." },
+      { title: "Secure Booking", description: "Confirm stay dates with secure, flexible payment plans." },
+      { title: "Check-in & Welcoming", description: "Access onboarding info, concierge check-in coordinates, and key handover." },
+      { title: "Enjoy Your Stay", description: "Benefit from regular housekeeping, constant electricity, and 24/7 support." }
+    ],
+    benefits: [
+      "Hotel-Grade Concierge Support",
+      "24/7 Back-up Power & Security",
+      "Professional Cleaners & Laundry",
+      "Direct Booking via Instagram Page",
+      "Sophisticated Interiors & Smart Home Features"
+    ]
+  },
 ];
 
 export const NAV_LINKS = [
@@ -647,7 +736,7 @@ export const WHY_INVEST = [
   {
     title: "Professional Guidance",
     description:
-      "Benefit from 12+ years of market expertise and data-driven investment strategies.",
+      "Benefit from 6+ years of market expertise and data-driven investment strategies.",
   },
 ];
 

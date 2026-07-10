@@ -156,7 +156,7 @@ export default async function ServiceDetailPage({ params }: Props) {
               Ready to Discuss Your Objectives?
             </h3>
             <p className="text-sm md:text-base text-navy/60 dark:text-white/60 mb-8 max-w-lg mx-auto">
-              Schedule a private consultation with Aluko Olajumoke to receive tailored guidance for your property endeavors.
+              Schedule a private consultation with Aluko Olajumoke .O to receive tailored guidance for your property endeavors.
             </p>
             <Link href="/contact" className="btn-gold">
               <Calendar size={18} /> Book a Consultation

@@ -4,7 +4,7 @@ import FadeIn from "@/components/ui/FadeIn";
 
 export default function Stats() {
   return (
-    <section className="bg-white dark:bg-navy/30 border-b border-gray-100 dark:border-white/5">
+    <section className="bg-soft border-b border-gray-100 dark:bg-navy/30 dark:border-white/5">
       <div className="max-w-7xl mx-auto px-6 md:px-12 py-16">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
           {STATS.map((stat, i) => (

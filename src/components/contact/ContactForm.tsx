@@ -147,6 +147,7 @@ export default function ContactForm() {
               <option>Selling Property</option>
               <option>Investment Consultation</option>
               <option>Property Inspection</option>
+              <option>Shortlets</option>
               <option>Schedule Inspection</option>
               <option>Other</option>
             </select>

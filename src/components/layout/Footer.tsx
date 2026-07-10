@@ -17,14 +17,15 @@ const WhatsAppIcon = ({ className }: { className?: string }) => (
 
 export default function Footer() {
   return (
-    <footer className="bg-white text-navy border-t border-gray-100 dark:bg-navy dark:text-white dark:border-white/5">
+    <footer className="bg-[#0B1528] text-white/80 border-t border-white/5">
       <div className="section-padding !pb-12">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+          
           <div>
             <div className="mb-6">
-              <Logo width={180} height={58} className="dark:brightness-110" />
+              <Logo width={180} height={58} className="brightness-0 invert opacity-95" />
             </div>
-            <p className="text-navy/60 dark:text-white/60 text-sm leading-relaxed mb-6">
+            <p className="text-white/60 text-sm leading-relaxed mb-6">
               Premium real estate brokerage and investment consultancy serving
               discerning clients across Nigeria.
             </p>
@@ -40,7 +41,7 @@ export default function Footer() {
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-full border border-navy/10 dark:border-white/20 flex items-center justify-center text-navy dark:text-white hover:bg-gold hover:border-gold hover:text-white transition-all duration-300"
+                  className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-white/70 hover:bg-gold hover:border-gold hover:text-white transition-all duration-300"
                 >
                   <Icon size={16} />
                 </a>
@@ -49,13 +50,13 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="font-heading text-lg mb-6 text-navy dark:text-white">Quick Links</h4>
+            <h4 className="font-heading text-lg mb-6 text-white font-medium">Quick Links</h4>
             <ul className="space-y-3">
               {NAV_LINKS.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-navy/60 dark:text-white/60 hover:text-gold transition-colors text-sm"
+                    className="text-white/60 hover:text-gold transition-colors text-sm"
                   >
                     {link.label}
                   </Link>
@@ -65,14 +66,14 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="font-heading text-lg mb-6 text-navy dark:text-white">Properties</h4>
+            <h4 className="font-heading text-lg mb-6 text-white font-medium">Properties</h4>
             <ul className="space-y-3">
-              {["For Sale", "For Rent", "Luxury Homes", "Commercial", "Land"].map(
+              {["For Sale", "Offplan", "Finished Homes", "Condos", "Commercial", "Land"].map(
                 (item) => (
                   <li key={item}>
                     <Link
                       href="/properties"
-                      className="text-navy/60 dark:text-white/60 hover:text-gold transition-colors text-sm"
+                      className="text-white/60 hover:text-gold transition-colors text-sm"
                     >
                       {item}
                     </Link>
@@ -83,12 +84,12 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="font-heading text-lg mb-6 text-navy dark:text-white">Contact</h4>
+            <h4 className="font-heading text-lg mb-6 text-white font-medium">Contact</h4>
             <ul className="space-y-4">
               {SITE.phone.map((phone) => {
                 const isWhatsApp = phone.includes("706");
                 return (
-                  <li key={phone} className="flex items-center gap-3 text-sm text-navy/60 dark:text-white/60">
+                  <li key={phone} className="flex items-center gap-3 text-sm text-white/60">
                     {isWhatsApp ? (
                       <WhatsAppIcon className="text-gold shrink-0" />
                     ) : (
@@ -98,28 +99,28 @@ export default function Footer() {
                       href={isWhatsApp ? `https://wa.me/${phone.replace(/[\s+]/g, "")}` : `tel:${phone.replace(/[\s+]/g, "")}`}
                       target={isWhatsApp ? "_blank" : undefined}
                       rel={isWhatsApp ? "noopener noreferrer" : undefined}
-                      className="hover:text-gold transition-colors"
+                      className="hover:text-gold transition-colors text-white/60"
                     >
                       {phone}
                     </a>
                   </li>
                 );
               })}
-              <li className="flex items-center gap-3 text-sm text-navy/60 dark:text-white/60">
+              <li className="flex items-center gap-3 text-sm text-white/60">
                 <Mail size={14} className="text-gold shrink-0" />
-                <a href={`mailto:${SITE.email}`} className="hover:text-gold transition-colors">
+                <a href={`mailto:${SITE.email}`} className="hover:text-gold transition-colors text-white/60">
                   {SITE.email}
                 </a>
               </li>
             </ul>
 
             <div className="mt-8">
-              <h4 className="font-heading text-lg mb-4 text-navy dark:text-white">Newsletter</h4>
+              <h4 className="font-heading text-lg mb-4 text-white font-medium">Newsletter</h4>
               <form className="flex gap-2" action="#">
                 <input
                   type="email"
                   placeholder="Your email"
-                  className="flex-1 px-4 py-2.5 rounded-full bg-soft border border-gray-200 dark:border-white/20 dark:bg-white/10 text-navy dark:text-white placeholder:text-navy/40 dark:placeholder:text-white/40 focus:outline-none focus:border-gold"
+                  className="flex-1 px-4 py-2.5 rounded-full bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-gold"
                 />
                 <button type="submit" className="btn-gold !px-5 !py-2.5 text-sm">
                   Join
@@ -127,15 +128,16 @@ export default function Footer() {
               </form>
             </div>
           </div>
+
         </div>
       </div>
 
-      <div className="border-t border-gray-100 dark:border-white/10">
+      <div className="border-t border-white/10">
         <div className="max-w-7xl mx-auto px-6 md:px-12 py-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-navy/40 dark:text-white/40 text-sm">
+          <p className="text-white/40 text-sm">
             &copy; {new Date().getFullYear()} {SITE.company}. All rights reserved.
           </p>
-          <div className="flex gap-6 text-sm text-navy/40 dark:text-white/40">
+          <div className="flex gap-6 text-sm text-white/40">
             <Link href="/privacy" className="hover:text-gold transition-colors">
               Privacy Policy
             </Link>
