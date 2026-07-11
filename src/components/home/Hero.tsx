@@ -45,8 +45,8 @@ export default function Hero() {
             transition={{ duration: 0.8, delay: 0.4 }}
             className="font-heading text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light leading-[1.15] mb-6 tracking-tight"
           >
-            Find A Perfect <br />
-            <span className="text-gold font-normal">Home</span> To Live With
+            Home Is Closer <br />
+            <span className="text-gold font-normal">Than You Think</span>
           </motion.h1>
 
           {/* Description */}

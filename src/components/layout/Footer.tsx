@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
-import { Instagram, Facebook, Linkedin, Twitter, Mail, Phone } from "lucide-react";
-import { SITE, NAV_LINKS } from "@/data/site";
+import { useState } from "react";
+import { Instagram, Facebook, Linkedin, Twitter, Mail, Phone, Globe, MapPin, ChevronDown } from "lucide-react";
+import { SITE, NAV_LINKS, FAQS } from "@/data/site";
 import Logo from "@/components/ui/Logo";
 
 const WhatsAppIcon = ({ className }: { className?: string }) => (
@@ -16,16 +19,32 @@ const WhatsAppIcon = ({ className }: { className?: string }) => (
 );
 
 export default function Footer() {
+  const [showFaq, setShowFaq] = useState(false);
+  const [openFaqId, setOpenFaqId] = useState<string | null>(null);
+
+  const toggleFaq = () => {
+    setShowFaq((prev) => !prev);
+    // Smooth scroll to bottom when opening
+    if (!showFaq) {
+      setTimeout(() => {
+        window.scrollTo({
+          top: document.body.scrollHeight,
+          behavior: "smooth"
+        });
+      }, 100);
+    }
+  };
+
   return (
-    <footer className="bg-[#0B1528] text-white/80 border-t border-white/5">
-      <div className="section-padding !pb-12">
+    <footer className="bg-navy text-white/80 border-t border-white/5">
+      <div className="section-padding !pb-12 bg-[#0B1528] dark:bg-navy">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           
           <div>
             <div className="mb-6">
               <Logo width={180} height={58} className="brightness-0 invert opacity-95" />
             </div>
-            <p className="text-white/60 text-sm leading-relaxed mb-6">
+            <p className="text-white/60 text-sm leading-relaxed mb-6 font-body">
               Premium real estate brokerage and investment consultancy serving
               discerning clients across Nigeria.
             </p>
@@ -52,22 +71,36 @@ export default function Footer() {
           <div>
             <h4 className="font-heading text-lg mb-6 text-white font-medium">Quick Links</h4>
             <ul className="space-y-3">
-              {NAV_LINKS.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-white/60 hover:text-gold transition-colors text-sm"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
+              {NAV_LINKS.map((link) => {
+                if (link.label === "Contact") {
+                  return (
+                    <li key="faq">
+                      <button
+                        onClick={toggleFaq}
+                        className="text-white/60 hover:text-gold transition-colors text-sm text-left focus:outline-none cursor-pointer font-heading"
+                      >
+                        FAQ
+                      </button>
+                    </li>
+                  );
+                }
+                return (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-white/60 hover:text-gold transition-colors text-sm font-heading"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </div>
 
           <div>
             <h4 className="font-heading text-lg mb-6 text-white font-medium">Properties</h4>
-            <ul className="space-y-3">
+            <ul className="space-y-3 font-heading">
               {["For Sale", "Offplan", "Finished Homes", "Condos", "Commercial", "Land"].map(
                 (item) => (
                   <li key={item}>
@@ -84,12 +117,12 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="font-heading text-lg mb-6 text-white font-medium">Contact</h4>
-            <ul className="space-y-4">
+            <h4 className="font-heading text-lg mb-6 text-white font-medium">Contact Us</h4>
+            <ul className="space-y-4 font-body">
               {SITE.phone.map((phone) => {
                 const isWhatsApp = phone.includes("706");
                 return (
-                  <li key={phone} className="flex items-center gap-3 text-sm text-white/60">
+                  <li key={phone} className="flex items-center gap-3 text-sm text-white/60 hover:text-gold transition-colors">
                     {isWhatsApp ? (
                       <WhatsAppIcon className="text-gold shrink-0" />
                     ) : (
@@ -99,18 +132,27 @@ export default function Footer() {
                       href={isWhatsApp ? `https://wa.me/${phone.replace(/[\s+]/g, "")}` : `tel:${phone.replace(/[\s+]/g, "")}`}
                       target={isWhatsApp ? "_blank" : undefined}
                       rel={isWhatsApp ? "noopener noreferrer" : undefined}
-                      className="hover:text-gold transition-colors text-white/60"
                     >
                       {phone}
                     </a>
                   </li>
                 );
               })}
-              <li className="flex items-center gap-3 text-sm text-white/60">
+              <li className="flex items-center gap-3 text-sm text-white/60 hover:text-gold transition-colors">
                 <Mail size={14} className="text-gold shrink-0" />
-                <a href={`mailto:${SITE.email}`} className="hover:text-gold transition-colors text-white/60">
+                <a href={`mailto:${SITE.email}`}>
                   {SITE.email}
                 </a>
+              </li>
+              <li className="flex items-center gap-3 text-sm text-white/60 hover:text-gold transition-colors">
+                <Globe size={14} className="text-gold shrink-0" />
+                <a href={`https://${SITE.website}`} target="_blank" rel="noopener noreferrer">
+                  {SITE.website}
+                </a>
+              </li>
+              <li className="flex items-start gap-3 text-sm text-white/60">
+                <MapPin size={14} className="text-gold shrink-0 mt-1" />
+                <span>{SITE.address}</span>
               </li>
             </ul>
 
@@ -122,7 +164,7 @@ export default function Footer() {
                   placeholder="Your email"
                   className="flex-1 px-4 py-2.5 rounded-full bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-gold"
                 />
-                <button type="submit" className="btn-gold !px-5 !py-2.5 text-sm">
+                <button type="submit" className="btn-gold !px-5 !py-2.5 text-sm cursor-pointer">
                   Join
                 </button>
               </form>
@@ -132,7 +174,46 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="border-t border-white/10">
+      {/* FAQ Dropdown Accordion Panel inside Footer */}
+      {showFaq && (
+        <div className="border-t border-white/5 bg-[#0B1528]/80 dark:bg-navy/80">
+          <div className="max-w-3xl mx-auto px-6 py-12">
+            <h3 className="font-heading text-xl md:text-2xl text-white font-light text-center mb-8">
+              Frequently Asked Questions
+            </h3>
+            <div className="space-y-3">
+              {FAQS.map((faq) => {
+                const isOpen = openFaqId === faq.id;
+                return (
+                  <div key={faq.id} className="rounded-xl bg-white/5 border border-white/10 overflow-hidden transition-all duration-300">
+                    <button
+                      onClick={() => setOpenFaqId(isOpen ? null : faq.id)}
+                      className="w-full flex items-center justify-between p-4 text-left text-white focus:outline-none cursor-pointer hover:bg-white/5"
+                    >
+                      <span className="font-medium text-sm md:text-base pr-4 font-heading">
+                        {faq.question}
+                      </span>
+                      <ChevronDown
+                        size={16}
+                        className={`text-gold shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+                      />
+                    </button>
+                    <div
+                      className={`overflow-hidden transition-all duration-500 ease-in-out ${isOpen ? "max-h-[300px] opacity-100" : "max-h-0 opacity-0"}`}
+                    >
+                      <p className="p-4 pt-0 text-xs md:text-sm text-white/60 leading-relaxed font-body">
+                        {faq.answer}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="border-t border-white/10 bg-[#0B1528] dark:bg-navy">
         <div className="max-w-7xl mx-auto px-6 md:px-12 py-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-white/40 text-sm">
             &copy; {new Date().getFullYear()} {SITE.company}. All rights reserved.

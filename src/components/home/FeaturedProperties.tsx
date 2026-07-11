@@ -2,15 +2,37 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Bed, Bath, Maximize, MapPin, Heart } from "lucide-react";
+import { Bed, Bath, Maximize, MapPin, Heart, ChevronLeft, ChevronRight } from "lucide-react";
 import { PROPERTIES } from "@/data/site";
 import { formatPrice } from "@/lib/utils";
 import FadeIn from "@/components/ui/FadeIn";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 
 export default function FeaturedProperties() {
-  const featured = PROPERTIES.filter((p) => p.featured).slice(0, 3);
+  // Filter out shortlet apartments and regular apartments, showing For Sale properties only
+  const properties = PROPERTIES.filter(
+    (p) => p.status !== "Shortlet" && p.type !== "Apartment" && p.id !== "rosebowl-shortlet-1"
+  );
+
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [visibleItems, setVisibleItems] = useState(3);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 640) {
+        setVisibleItems(1);
+      } else if (window.innerWidth < 1024) {
+        setVisibleItems(2);
+      } else {
+        setVisibleItems(3);
+      }
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const toggleFavorite = (id: string) => {
     setFavorites((prev) =>
@@ -18,88 +40,153 @@ export default function FeaturedProperties() {
     );
   };
 
+  const maxIndex = Math.max(0, properties.length - visibleItems);
+
+  const handlePrev = () => {
+    setCurrentIndex((prev) => (prev === 0 ? maxIndex : prev - 1));
+  };
+
+  const handleNext = () => {
+    setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
+  };
+
+  // Gap between items is 24px (gap-6)
+  const gap = 24;
+
   return (
-    <section id="properties" className="section-padding">
-      <div className="max-w-7xl mx-auto">
-        <FadeIn className="text-center mb-16">
-          <p className="section-subheading">Featured Properties</p>
-          <h2 className="section-heading">Exceptional Homes</h2>
-        </FadeIn>
+    <section id="properties" className="section-padding bg-white dark:bg-navy border-b border-gray-100 dark:border-white/5">
+      <div className="max-w-7xl mx-auto w-full pt-12 md:pt-16">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+          <FadeIn>
+            <p className="section-subheading">Featured Listings</p>
+            <h2 className="section-heading">Exceptional Homes</h2>
+          </FadeIn>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {featured.map((property, i) => (
-            <FadeIn key={property.id} delay={i * 0.15}>
-              <div className="luxury-card group hover:shadow-luxury-lg">
-                <div className="relative aspect-[4/3] overflow-hidden">
-                  <Image
-                    src={property.images[0]}
-                    alt={property.title}
-                    fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-700"
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                  />
-                  <div className="absolute top-4 left-4 flex gap-2">
-                    <span className="px-3 py-1 bg-gold text-white text-xs font-semibold rounded-full">
-                      {property.status}
-                    </span>
-                    {property.luxury && (
-                      <span className="px-3 py-1 bg-navy/80 text-white text-xs font-semibold rounded-full backdrop-blur-sm">
-                        Luxury
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => toggleFavorite(property.id)}
-                    className="absolute top-4 right-4 w-9 h-9 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-colors"
-                    aria-label="Save to favorites"
-                  >
-                    <Heart
-                      size={16}
-                      className={
-                        favorites.includes(property.id)
-                          ? "fill-gold text-gold"
-                          : "text-navy/60"
-                      }
+          {/* Carousel Controls */}
+          {properties.length > visibleItems && (
+            <FadeIn className="flex gap-3">
+              <button
+                onClick={handlePrev}
+                className="w-12 h-12 rounded-full border border-navy/10 dark:border-white/10 hover:border-gold hover:bg-gold hover:text-white dark:hover:bg-gold dark:hover:border-gold transition-all duration-300 flex items-center justify-center text-navy dark:text-white shadow-sm active:scale-95 cursor-pointer"
+                aria-label="Previous properties"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <button
+                onClick={handleNext}
+                className="w-12 h-12 rounded-full border border-navy/10 dark:border-white/10 hover:border-gold hover:bg-gold hover:text-white dark:hover:bg-gold dark:hover:border-gold transition-all duration-300 flex items-center justify-center text-navy dark:text-white shadow-sm active:scale-95 cursor-pointer"
+                aria-label="Next properties"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </FadeIn>
+          )}
+        </div>
+
+        {/* Carousel Viewport Container */}
+        <div className="relative overflow-hidden w-full py-4">
+          <motion.div
+            className="flex gap-6"
+            animate={{
+              x: `calc(-${currentIndex * (100 / visibleItems)}% - ${
+                currentIndex * (gap / visibleItems)
+              }px)`,
+            }}
+            transition={{ type: "spring", stiffness: 180, damping: 22 }}
+          >
+            {properties.map((property) => (
+              <div
+                key={property.id}
+                style={{
+                  minWidth:
+                    visibleItems === 1
+                      ? "100%"
+                      : visibleItems === 2
+                      ? `calc(50% - ${gap / 2}px)`
+                      : `calc(33.333% - ${(gap * 2) / 3}px)`,
+                }}
+                className="shrink-0"
+              >
+                <div className="luxury-card group hover:shadow-luxury-lg h-full flex flex-col justify-between bg-white dark:bg-navy/40">
+                  <div className="relative aspect-[4/3] overflow-hidden">
+                    <Image
+                      src={property.images[0]}
+                      alt={property.title}
+                      fill
+                      className="object-cover group-hover:scale-110 transition-transform duration-700"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     />
-                  </button>
-                </div>
-
-                <div className="p-6">
-                  <div className="flex items-center gap-1 text-navy/50 dark:text-white/50 text-sm mb-2">
-                    <MapPin size={14} />
-                    {property.location}
-                  </div>
-                  <h3 className="font-heading text-xl text-navy dark:text-white mb-3">
-                    {property.title}
-                  </h3>
-                  <p className="font-heading text-2xl text-gold mb-4">
-                    {formatPrice(property.price)}
-                  </p>
-
-                  <div className="flex items-center gap-4 text-sm text-navy/60 dark:text-white/60 mb-6 pb-6 border-b border-gray-100 dark:border-white/5">
-                    {property.bedrooms > 0 && (
-                      <span className="flex items-center gap-1">
-                        <Bed size={14} /> {property.bedrooms} Beds
+                    <div className="absolute top-4 left-4 flex gap-2">
+                      <span className="px-3 py-1 bg-gold text-white text-xs font-semibold rounded-full font-heading">
+                        {property.status}
                       </span>
-                    )}
-                    <span className="flex items-center gap-1">
-                      <Bath size={14} /> {property.bathrooms} Baths
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Maximize size={14} /> {property.sqft.toLocaleString()} sqft
-                    </span>
+                      {property.luxury && (
+                        <span className="px-3 py-1 bg-navy/80 text-white text-xs font-semibold rounded-full backdrop-blur-sm font-heading">
+                          Luxury
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => toggleFavorite(property.id)}
+                      className="absolute top-4 right-4 w-9 h-9 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-colors cursor-pointer"
+                      aria-label="Save to favorites"
+                    >
+                      <Heart
+                        size={16}
+                        className={
+                          favorites.includes(property.id)
+                            ? "fill-gold text-gold"
+                            : "text-navy/60"
+                        }
+                      />
+                    </button>
                   </div>
 
-                  <Link
-                    href={`/properties/${property.slug}`}
-                    className="btn-outline-gold w-full text-center text-sm !py-2.5"
-                  >
-                    View Details
-                  </Link>
+                  <div className="p-6 flex-1 flex flex-col justify-between bg-white dark:bg-navy/40">
+                    <div>
+                      <div className="flex items-center gap-1.5 text-navy/55 dark:text-white/55 text-xs mb-2 font-body">
+                        <MapPin size={13} className="text-gold shrink-0" />
+                        <span>{property.location}</span>
+                      </div>
+                      <h3 className="font-heading text-lg md:text-xl text-navy dark:text-white mb-2 leading-tight">
+                        {property.title}
+                      </h3>
+                      <p className="font-heading text-xl md:text-2xl text-gold mb-4 font-semibold">
+                        {formatPrice(property.price)}
+                      </p>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center gap-4 text-xs text-navy/60 dark:text-white/60 mb-6 pb-5 border-b border-gray-100 dark:border-white/5 font-body">
+                        {property.bedrooms > 0 && (
+                          <span className="flex items-center gap-1 shrink-0">
+                            <Bed size={13} /> {property.bedrooms} Beds
+                          </span>
+                        )}
+                        {property.bathrooms > 0 && (
+                          <span className="flex items-center gap-1 shrink-0">
+                            <Bath size={13} /> {property.bathrooms} Baths
+                          </span>
+                        )}
+                        {property.sqft > 0 && (
+                          <span className="flex items-center gap-1 shrink-0">
+                            <Maximize size={13} /> {property.sqft.toLocaleString()} sqft
+                          </span>
+                        )}
+                      </div>
+
+                      <Link
+                        href={`/properties/${property.slug}`}
+                        className="btn-outline-gold w-full text-center text-xs !py-3 block"
+                      >
+                        View Details
+                      </Link>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </FadeIn>
-          ))}
+            ))}
+          </motion.div>
         </div>
 
         <FadeIn className="text-center mt-12">

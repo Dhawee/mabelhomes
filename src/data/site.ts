@@ -331,6 +331,90 @@ export const PROPERTIES: Property[] = [
     parking: 30,
     coordinates: { lat: 9.0765, lng: 7.3986 },
   },
+  {
+    id: "7",
+    slug: "4-bedroom-semi-detached-duplex-chevron-lekki",
+    title: "4 Bedroom Semi-Detached Duplex",
+    location: "Chevron, Lekki, Lagos",
+    city: "Lagos",
+    price: 180000000,
+    bedrooms: 4,
+    bathrooms: 5,
+    sqft: 3400,
+    status: "For Sale",
+    type: "Duplex",
+    featured: true,
+    luxury: false,
+    images: [
+      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=80",
+      "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=1200&q=80"
+    ],
+    description: "An elegant 4 bedroom semi-detached duplex situated in a very secure gated estate in Chevron, Lekki. Perfect for modern families.",
+    buildingApproval: "Available",
+    survey: "Registered Survey",
+    documentTitle: "Governor's Consent",
+    features: ["All Rooms Ensuite", "Fitted Kitchen", "Secure Estate", "Family Lounge"],
+    amenities: ["24/7 Security", "Clean Water", "Backup Power"],
+    yearBuilt: 2024,
+    parking: 3,
+    coordinates: { lat: 6.4350, lng: 3.5250 }
+  },
+  {
+    id: "8",
+    slug: "5-bedroom-luxury-detached-house-osapa-london",
+    title: "5 Bedroom Luxury Detached House",
+    location: "Osapa London, Lekki, Lagos",
+    city: "Lagos",
+    price: 350000000,
+    bedrooms: 5,
+    bathrooms: 6,
+    sqft: 5200,
+    status: "For Sale",
+    type: "Mansion",
+    featured: true,
+    luxury: true,
+    images: [
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80",
+      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&q=80"
+    ],
+    description: "Superb luxury 5 bedroom fully detached mansion featuring premium finishings, massive living areas, fully fitted kitchen, swimming pool, and secure compound in Osapa London.",
+    buildingApproval: "Available",
+    survey: "Registered Survey",
+    documentTitle: "Governor's Consent",
+    features: ["Swimming Pool", "Ensuite Rooms", "Walk-in Closet", "Fully Fitted Kitchen"],
+    amenities: ["24/7 Security", "Water Treatment", "Electricity"],
+    yearBuilt: 2025,
+    parking: 4,
+    coordinates: { lat: 6.4320, lng: 3.5100 }
+  },
+  {
+    id: "9",
+    slug: "5-bedroom-waterfront-villa-lekki",
+    title: "5 Bedroom Waterfront Villa",
+    location: "Lekki Phase 1, Lagos",
+    city: "Lagos",
+    price: 650000000,
+    bedrooms: 5,
+    bathrooms: 6,
+    sqft: 6500,
+    status: "For Sale",
+    type: "Mansion",
+    featured: true,
+    luxury: true,
+    images: [
+      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=80",
+      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&q=80"
+    ],
+    description: "A breathtaking contemporary 5 bedroom waterfront villa situated in the serene and secure neighborhood of Lekki Phase 1, offering panoramic lagoon views.",
+    buildingApproval: "Available",
+    survey: "Registered Survey",
+    documentTitle: "C of O",
+    features: ["Waterfront View", "Jetty Access", "Cinema Room", "Infinity Pool", "Elevator"],
+    amenities: ["24/7 Security", "Private Access Control", "Backup Power"],
+    yearBuilt: 2025,
+    parking: 4,
+    coordinates: { lat: 6.4480, lng: 3.4800 }
+  }
 ];
 
 export const TESTIMONIALS: Testimonial[] = [
@@ -647,6 +731,7 @@ export const SERVICES: Service[] = [
       "24/7 Back-up Power & Security",
       "Professional Cleaners & Laundry",
       "Direct Booking via Instagram Page",
+      "Direct Booking via WhatsApp",
       "Sophisticated Interiors & Smart Home Features"
     ]
   },
