@@ -4,7 +4,7 @@ import FadeIn from "@/components/ui/FadeIn";
 
 export default function WhyInvest() {
   return (
-    <section className="section-padding bg-soft border-b border-gray-100 dark:bg-navy/20 dark:border-white/5">
+    <section className="section-padding bg-soft border-b border-gray-100 dark:bg-navy-light dark:border-white/5">
       <div className="max-w-7xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           <FadeIn direction="left">
@@ -34,7 +34,7 @@ export default function WhyInvest() {
           <FadeIn direction="right" delay={0.2}>
             <div className="relative w-full h-[380px] sm:h-[480px] lg:h-[550px] rounded-2xl overflow-hidden shadow-luxury-lg">
               <Image
-                src="https://images.unsplash.com/photo-1560520033-831a174cb1fa?w=800&q=80"
+                src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200&q=90"
                 alt="Real estate investment"
                 fill
                 className="object-cover"

@@ -157,7 +157,7 @@ export default function PropertySearch() {
               className="btn-gold text-center !py-3.5 flex items-center justify-center gap-2 hover:bg-gold-light transition-all shadow-md active:scale-[0.98] w-full"
             >
               <Search size={16} />
-              <span>Search ({filteredCount})</span>
+              <span>Search Properties</span>
             </Link>
           </div>
         </div>

@@ -47,7 +47,7 @@ export default async function ServiceDetailPage({ params }: Props) {
   if (!service) notFound();
 
   const Icon = iconMap[service.icon] || Home;
-  const otherServices = SERVICES.filter((s) => s.slug !== slug).slice(0, 3);
+  const otherServices = SERVICES.filter((s) => s.slug !== slug);
 
   return (
     <div className="pt-32 pb-20 bg-white dark:bg-navy text-navy dark:text-white">
@@ -165,31 +165,38 @@ export default async function ServiceDetailPage({ params }: Props) {
         </FadeIn>
 
         {/* Other Services */}
-        <FadeIn delay={0.4}>
+        <FadeIn delay={0.4} className="overflow-hidden">
           <h2 className="font-heading text-2xl text-navy dark:text-white mb-6 font-normal">
             Explore Other Services
           </h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            {otherServices.map((s) => {
-              const SIcon = iconMap[s.icon] || Home;
-              return (
-                <Link
-                  key={s.id}
-                  href={`/services/${s.slug}`}
-                  className="luxury-card p-6 hover:shadow-luxury-lg hover:-translate-y-1 transition-all duration-500 group bg-white dark:bg-navy/50 border border-gray-100 dark:border-white/5 h-full flex flex-col"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-gold/10 flex items-center justify-center mb-4 group-hover:bg-gold/20 transition-colors shrink-0">
-                    <SIcon size={20} className="text-gold" />
-                  </div>
-                  <h3 className="font-heading text-lg text-navy dark:text-white group-hover:text-gold transition-colors font-medium mb-2">
-                    {s.title}
-                  </h3>
-                  <p className="text-xs text-navy/50 dark:text-white/50 leading-relaxed flex-grow line-clamp-2">
-                    {s.description}
-                  </p>
-                </Link>
-              );
-            })}
+          <div className="relative w-full overflow-hidden mask-fade py-2">
+            <div className="flex gap-6 animate-marquee hover:[animation-play-state:paused] w-max select-none">
+              {[...otherServices, ...otherServices].map((s, idx) => {
+                const SIcon = iconMap[s.icon] || Home;
+                return (
+                  <Link
+                    key={`${s.id}-${idx}`}
+                    href={`/services/${s.slug}`}
+                    className="luxury-card p-6 hover:shadow-luxury-lg hover:-translate-y-1 transition-all duration-500 group bg-white dark:bg-navy/50 border border-gray-100 dark:border-white/5 w-[280px] shrink-0 flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="w-10 h-10 rounded-xl bg-gold/10 flex items-center justify-center mb-4 group-hover:bg-gold/20 transition-colors shrink-0">
+                        <SIcon size={20} className="text-gold" />
+                      </div>
+                      <h3 className="font-heading text-base md:text-lg text-navy dark:text-white group-hover:text-gold transition-colors font-medium mb-2 whitespace-normal line-clamp-1">
+                        {s.title}
+                      </h3>
+                      <p className="text-xs text-navy/55 dark:text-white/55 leading-relaxed line-clamp-3 whitespace-normal">
+                        {s.description}
+                      </p>
+                    </div>
+                    <div className="mt-4 text-gold text-xs font-semibold uppercase tracking-wider font-heading">
+                      Learn More &rarr;
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
           </div>
         </FadeIn>
       </div>

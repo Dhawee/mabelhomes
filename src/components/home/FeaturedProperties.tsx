@@ -54,8 +54,8 @@ export default function FeaturedProperties() {
   const gap = 24;
 
   return (
-    <section id="properties" className="section-padding bg-white dark:bg-navy border-b border-gray-100 dark:border-white/5">
-      <div className="max-w-7xl mx-auto w-full pt-12 md:pt-16">
+    <section id="properties" className="py-12 md:py-16 px-6 md:px-12 bg-white dark:bg-navy border-b border-gray-100 dark:border-white/5">
+      <div className="max-w-7xl mx-auto w-full pt-2">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
           <FadeIn>
             <p className="section-subheading">Featured Listings</p>

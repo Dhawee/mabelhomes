@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { Instagram, Facebook, Linkedin, Twitter, Mail, Phone, Globe, MapPin, ChevronDown } from "lucide-react";
-import { SITE, NAV_LINKS, FAQS } from "@/data/site";
+import { Instagram, Facebook, Linkedin, Twitter, Mail, Phone, Globe, MapPin } from "lucide-react";
+import { SITE, NAV_LINKS } from "@/data/site";
 import Logo from "@/components/ui/Logo";
 
 const WhatsAppIcon = ({ className }: { className?: string }) => (
@@ -19,22 +18,6 @@ const WhatsAppIcon = ({ className }: { className?: string }) => (
 );
 
 export default function Footer() {
-  const [showFaq, setShowFaq] = useState(false);
-  const [openFaqId, setOpenFaqId] = useState<string | null>(null);
-
-  const toggleFaq = () => {
-    setShowFaq((prev) => !prev);
-    // Smooth scroll to bottom when opening
-    if (!showFaq) {
-      setTimeout(() => {
-        window.scrollTo({
-          top: document.body.scrollHeight,
-          behavior: "smooth"
-        });
-      }, 100);
-    }
-  };
-
   return (
     <footer className="bg-navy text-white/80 border-t border-white/5">
       <div className="section-padding !pb-12 bg-[#0B1528] dark:bg-navy">
@@ -75,12 +58,12 @@ export default function Footer() {
                 if (link.label === "Contact") {
                   return (
                     <li key="faq">
-                      <button
-                        onClick={toggleFaq}
-                        className="text-white/60 hover:text-gold transition-colors text-sm text-left focus:outline-none cursor-pointer font-heading"
+                      <Link
+                        href="/faq"
+                        className="text-white/60 hover:text-gold transition-colors text-sm font-heading"
                       >
                         FAQ
-                      </button>
+                      </Link>
                     </li>
                   );
                 }
@@ -173,45 +156,6 @@ export default function Footer() {
 
         </div>
       </div>
-
-      {/* FAQ Dropdown Accordion Panel inside Footer */}
-      {showFaq && (
-        <div className="border-t border-white/5 bg-[#0B1528]/80 dark:bg-navy/80">
-          <div className="max-w-3xl mx-auto px-6 py-12">
-            <h3 className="font-heading text-xl md:text-2xl text-white font-light text-center mb-8">
-              Frequently Asked Questions
-            </h3>
-            <div className="space-y-3">
-              {FAQS.map((faq) => {
-                const isOpen = openFaqId === faq.id;
-                return (
-                  <div key={faq.id} className="rounded-xl bg-white/5 border border-white/10 overflow-hidden transition-all duration-300">
-                    <button
-                      onClick={() => setOpenFaqId(isOpen ? null : faq.id)}
-                      className="w-full flex items-center justify-between p-4 text-left text-white focus:outline-none cursor-pointer hover:bg-white/5"
-                    >
-                      <span className="font-medium text-sm md:text-base pr-4 font-heading">
-                        {faq.question}
-                      </span>
-                      <ChevronDown
-                        size={16}
-                        className={`text-gold shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
-                      />
-                    </button>
-                    <div
-                      className={`overflow-hidden transition-all duration-500 ease-in-out ${isOpen ? "max-h-[300px] opacity-100" : "max-h-0 opacity-0"}`}
-                    >
-                      <p className="p-4 pt-0 text-xs md:text-sm text-white/60 leading-relaxed font-body">
-                        {faq.answer}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className="border-t border-white/10 bg-[#0B1528] dark:bg-navy">
         <div className="max-w-7xl mx-auto px-6 md:px-12 py-6 flex flex-col md:flex-row items-center justify-between gap-4">

@@ -19,7 +19,7 @@ export default function Testimonials() {
   const testimonial = TESTIMONIALS[current];
 
   return (
-    <section id="testimonials" className="section-padding bg-[#0C2345] text-white">
+    <section id="testimonials" className="section-padding bg-navy-light text-white">
       <div className="max-w-7xl mx-auto">
         <FadeIn className="text-center mb-16">
           <p className="text-gold uppercase tracking-[0.2em] text-sm font-semibold mb-4">

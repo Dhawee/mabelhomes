@@ -30,7 +30,7 @@ const WhatsAppIcon = ({ className }: { className?: string }) => (
 
 export default function Shortlets() {
   return (
-    <section id="shortlets" className="section-padding bg-soft dark:bg-navy/30">
+    <section id="shortlets" className="section-padding bg-soft dark:bg-navy-light">
       <div className="max-w-7xl mx-auto">
         <div className="grid lg:grid-cols-12 gap-12 items-center">
           

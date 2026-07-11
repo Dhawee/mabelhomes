@@ -21,7 +21,7 @@ const iconMap: Record<string, React.ComponentType<{ size?: number; className?: s
 
 export default function WhyChoose() {
   return (
-    <section className="section-padding bg-soft border-b border-gray-100 dark:bg-navy/20 dark:border-white/5">
+    <section className="section-padding bg-soft border-b border-gray-100 dark:bg-navy-light dark:border-white/5">
       <div className="max-w-7xl mx-auto">
         <FadeIn className="text-center mb-16">
           <p className="section-subheading">Why Choose Us</p>
