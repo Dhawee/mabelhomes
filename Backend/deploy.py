@@ -25,7 +25,4 @@ if __name__ == "__main__":
     else:
         print("DJANGO_SUPERUSER_USERNAME/PASSWORD env variables not set. Skipping createsuperuser.")
         
-    # 3. Seed frontend properties data (idempotent, skips duplicates)
-    run_cmd(["python", "manage.py", "seed_frontend_data"])
-    
     print("Deployment setup completed successfully!")
