@@ -1,0 +1,411 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block title %}Dashboard — Mabel Homes Admin{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+  /* ---- Dashboard Styles ---- */
+  .dashboard-header {
+    background: linear-gradient(135deg, #0f2044 0%, #1a3a6b 100%);
+    margin: -20px -20px 24px;
+    padding: 28px 28px 24px;
+    color: white;
+  }
+  .dashboard-header h1 {
+    margin: 0 0 4px;
+    font-size: 22px;
+    font-weight: 700;
+    color: #c9a84c;
+    letter-spacing: 0.5px;
+  }
+  .dashboard-header p {
+    margin: 0;
+    color: rgba(255,255,255,0.65);
+    font-size: 13px;
+  }
+
+  /* Stats Grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+  .stat-card {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    padding: 18px 16px;
+    text-align: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  .stat-card .icon {
+    font-size: 28px;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .stat-card .value {
+    font-size: 32px;
+    font-weight: 800;
+    color: #0f2044;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-card .label {
+    font-size: 11px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .stat-card.gold .value { color: #c9a84c; }
+  .stat-card.red .value { color: #e74c3c; }
+  .stat-card.green .value { color: #27ae60; }
+  .stat-card.blue .value { color: #2980b9; }
+
+  /* Section cards */
+  .dashboard-section {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .dashboard-section-header {
+    background: #f8f9fa;
+    border-bottom: 1px solid #e5e5e5;
+    padding: 12px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .dashboard-section-header h2 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #333;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .dashboard-section-header a {
+    font-size: 12px;
+    color: #417690;
+    text-decoration: none;
+  }
+  .dashboard-section-header a:hover { text-decoration: underline; }
+
+  /* Enquiry list */
+  .enquiry-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .enquiry-item {
+    padding: 12px 18px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .enquiry-item:last-child { border-bottom: none; }
+  .enquiry-item .info { flex: 1; min-width: 0; }
+  .enquiry-item .name {
+    font-weight: 600;
+    font-size: 13px;
+    color: #222;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .enquiry-item .detail {
+    font-size: 12px;
+    color: #888;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+  }
+  .enquiry-item .date {
+    font-size: 11px;
+    color: #bbb;
+    white-space: nowrap;
+  }
+  .status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+  .status-Pending { background: #fff3cd; color: #856404; }
+  .status-Responded { background: #d4edda; color: #155724; }
+  .status-Closed { background: #f8d7da; color: #721c24; }
+
+  /* Notifications list */
+  .notif-item {
+    padding: 12px 18px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .notif-item:last-child { border-bottom: none; }
+  .notif-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e74c3c;
+    flex-shrink: 0;
+    margin-top: 5px;
+  }
+  .notif-title { font-size: 13px; font-weight: 600; color: #222; }
+  .notif-time { font-size: 11px; color: #bbb; }
+
+  /* Grid layout */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  /* Property mini cards */
+  .property-item {
+    padding: 10px 18px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .property-item:last-child { border-bottom: none; }
+  .property-info .title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #222;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+  }
+  .property-info .sub {
+    font-size: 11px;
+    color: #888;
+    margin-top: 2px;
+  }
+  .property-price {
+    font-size: 12px;
+    font-weight: bold;
+    color: #c9a84c;
+    white-space: nowrap;
+    margin-left: auto;
+  }
+
+  .empty-state {
+    padding: 24px;
+    text-align: center;
+    color: #aaa;
+    font-size: 13px;
+  }
+
+  @media (max-width: 900px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Dashboard Header -->
+<div class="dashboard-header">
+  <h1>Mabel Homes — Backend Portal</h1>
+  <p>Welcome back. Here's what's happening today.</p>
+</div>
+
+<!-- Statistics Grid -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <span class="icon">🏘️</span>
+    <div class="value">{{ stats.total_properties }}</div>
+    <div class="label">Total Properties</div>
+  </div>
+  <div class="stat-card green">
+    <span class="icon">✅</span>
+    <div class="value">{{ stats.visible_properties }}</div>
+    <div class="label">Visible</div>
+  </div>
+  <div class="stat-card gold">
+    <span class="icon">⭐</span>
+    <div class="value">{{ stats.featured_properties }}</div>
+    <div class="label">Featured</div>
+  </div>
+  <div class="stat-card red">
+    <span class="icon">🏷️</span>
+    <div class="value">{{ stats.sold_properties }}</div>
+    <div class="label">Sold</div>
+  </div>
+  <div class="stat-card">
+    <span class="icon">🙈</span>
+    <div class="value">{{ stats.hidden_properties }}</div>
+    <div class="label">Hidden</div>
+  </div>
+  <div class="stat-card red">
+    <span class="icon">❤️</span>
+    <div class="value">{{ stats.total_likes }}</div>
+    <div class="label">Total Likes</div>
+  </div>
+  <div class="stat-card blue">
+    <span class="icon">📨</span>
+    <div class="value">{{ stats.property_enquiries }}</div>
+    <div class="label">Property Enquiries</div>
+  </div>
+  <div class="stat-card blue">
+    <span class="icon">⚙️</span>
+    <div class="value">{{ stats.service_enquiries }}</div>
+    <div class="label">Service Enquiries</div>
+  </div>
+  <div class="stat-card">
+    <span class="icon">✉️</span>
+    <div class="value">{{ stats.contact_messages }}</div>
+    <div class="label">Contact Messages</div>
+  </div>
+  <div class="stat-card red">
+    <span class="icon">🔔</span>
+    <div class="value">{{ stats.unread_notifications }}</div>
+    <div class="label">Unread Alerts</div>
+  </div>
+</div>
+
+<!-- Main Content Grid -->
+<div class="grid-2">
+  <!-- Recent Property Enquiries -->
+  <div class="dashboard-section">
+    <div class="dashboard-section-header">
+      <h2>📨 Recent Property Enquiries</h2>
+      <a href="{% url 'admin:core_propertyenquiry_changelist' %}">View All →</a>
+    </div>
+    {% if recent_property_enquiries %}
+    <ul class="enquiry-list">
+      {% for enq in recent_property_enquiries %}
+      <li class="enquiry-item">
+        <div class="info">
+          <div class="name">{{ enq.name }}</div>
+          <div class="detail">{{ enq.property_title }}</div>
+          <div class="detail">{{ enq.email }} · {{ enq.phone }}</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="date">{{ enq.created_at|date:"M j, H:i" }}</div>
+          <span class="status-badge status-{{ enq.status }}">{{ enq.status }}</span>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty-state">No property enquiries yet.</div>
+    {% endif %}
+  </div>
+
+  <!-- Recent Service Enquiries -->
+  <div class="dashboard-section">
+    <div class="dashboard-section-header">
+      <h2>⚙️ Recent Service Enquiries</h2>
+      <a href="{% url 'admin:core_serviceenquiry_changelist' %}">View All →</a>
+    </div>
+    {% if recent_service_enquiries %}
+    <ul class="enquiry-list">
+      {% for enq in recent_service_enquiries %}
+      <li class="enquiry-item">
+        <div class="info">
+          <div class="name">{{ enq.name }}</div>
+          <div class="detail">{{ enq.service_title }}</div>
+          <div class="detail">{{ enq.email }}</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="date">{{ enq.created_at|date:"M j, H:i" }}</div>
+          <span class="status-badge status-{{ enq.status }}">{{ enq.status }}</span>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty-state">No service enquiries yet.</div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="grid-2">
+  <!-- Recent Notifications -->
+  <div class="dashboard-section">
+    <div class="dashboard-section-header">
+      <h2>🔔 Unread Notifications</h2>
+      <a href="{% url 'admin:core_adminnotification_changelist' %}">View All →</a>
+    </div>
+    {% if recent_notifications %}
+    {% for notif in recent_notifications %}
+    <div class="notif-item">
+      <div class="notif-dot"></div>
+      <div>
+        <div class="notif-title">{{ notif.title }}</div>
+        <div class="notif-time">{{ notif.created_at|timesince }} ago</div>
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="empty-state">✓ No unread notifications.</div>
+    {% endif %}
+  </div>
+
+  <!-- Recent Properties -->
+  <div class="dashboard-section">
+    <div class="dashboard-section-header">
+      <h2>🏘️ Recent Properties</h2>
+      <a href="{% url 'admin:core_property_changelist' %}">View All →</a>
+    </div>
+    {% if recent_properties %}
+    {% for prop in recent_properties %}
+    <div class="property-item">
+      <div class="property-info">
+        <div class="title">{{ prop.title }}</div>
+        <div class="sub">{{ prop.city }} · {{ prop.property_type.name }} · {{ prop.status }}</div>
+      </div>
+      <div class="property-price">₦{{ prop.price|floatformat:0 }}</div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="empty-state">No properties yet.</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="dashboard-section">
+  <div class="dashboard-section-header">
+    <h2>⚡ Quick Actions</h2>
+  </div>
+  <div style="padding: 18px; display: flex; gap: 12px; flex-wrap: wrap;">
+    <a href="{% url 'admin:core_property_add' %}" style="display:inline-block; padding:10px 20px; background:#417690; color:white; border-radius:4px; text-decoration:none; font-size:13px; font-weight:bold;">
+      ➕ Add Property
+    </a>
+    <a href="{% url 'admin:core_propertyenquiry_changelist' %}" style="display:inline-block; padding:10px 20px; background:#27ae60; color:white; border-radius:4px; text-decoration:none; font-size:13px; font-weight:bold;">
+      📨 Property Enquiries
+    </a>
+    <a href="{% url 'admin:core_serviceenquiry_changelist' %}" style="display:inline-block; padding:10px 20px; background:#2980b9; color:white; border-radius:4px; text-decoration:none; font-size:13px; font-weight:bold;">
+      ⚙️ Service Enquiries
+    </a>
+    <a href="{% url 'admin:core_contactmessage_changelist' %}" style="display:inline-block; padding:10px 20px; background:#8e44ad; color:white; border-radius:4px; text-decoration:none; font-size:13px; font-weight:bold;">
+      ✉️ Contact Messages
+    </a>
+    <a href="{% url 'admin:core_adminnotification_changelist' %}" style="display:inline-block; padding:10px 20px; background:#e74c3c; color:white; border-radius:4px; text-decoration:none; font-size:13px; font-weight:bold;">
+      🔔 Notifications
+    </a>
+  </div>
+</div>
+
+{% endblock %}

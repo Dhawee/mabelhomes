@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Search, MapPin, Home, DollarSign, Bed, Filter } from "lucide-react";
-import { PROPERTIES } from "@/data/site";
 import Link from "next/link";
 import FadeIn from "@/components/ui/FadeIn";
 
@@ -16,19 +15,6 @@ export default function PropertySearch() {
   const [status, setStatus] = useState("");
   const [priceRange, setPriceRange] = useState("");
   const [bedrooms, setBedrooms] = useState("");
-
-  const filteredCount = PROPERTIES.filter((p) => {
-    if (location) {
-      if (location === "Lagos") {
-        if (p.city !== "Lagos") return false;
-      } else {
-        if (!p.location.toLowerCase().includes(location.toLowerCase())) return false;
-      }
-    }
-    if (type && p.type !== type) return false;
-    if (status && p.status !== status) return false;
-    return true;
-  }).length;
 
   const getSearchUrl = () => {
     const params = new URLSearchParams();

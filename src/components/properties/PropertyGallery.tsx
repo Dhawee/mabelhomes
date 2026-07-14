@@ -1,93 +1,237 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Play, Image as ImageIcon } from "lucide-react";
+import { PropertyVideo } from "@/types";
+import PropertyVideoPlayer from "./PropertyVideoPlayer";
+
+// Unified gallery item: can be an image URL or a video object
+type GalleryItem =
+  | { kind: "image"; url: string; order: number }
+  | { kind: "video"; video: PropertyVideo; order: number };
 
 interface PropertyGalleryProps {
   images: string[];
+  videos?: PropertyVideo[];
   title: string;
 }
 
-export default function PropertyGallery({ images, title }: PropertyGalleryProps) {
+export default function PropertyGallery({
+  images,
+  videos = [],
+  title,
+}: PropertyGalleryProps) {
+  // Build unified, ordered gallery items
+  const items: GalleryItem[] = [
+    ...images.map((url, i) => ({
+      kind: "image" as const,
+      url,
+      order: i,
+    })),
+    ...videos.map((video) => ({
+      kind: "video" as const,
+      video,
+      order: 1000 + video.order, // videos after images by default
+    })),
+  ].sort((a, b) => a.order - b.order);
+
   const [current, setCurrent] = useState(0);
   const [lightbox, setLightbox] = useState(false);
 
-  const prev = () => setCurrent((c) => (c - 1 + images.length) % images.length);
-  const next = () => setCurrent((c) => (c + 1) % images.length);
+  const totalItems = items.length;
+  const prev = () => setCurrent((c) => (c - 1 + totalItems) % totalItems);
+  const next = () => setCurrent((c) => (c + 1) % totalItems);
+
+  // Auto-rotate only through images (pause on videos)
+  useEffect(() => {
+    if (totalItems <= 1) return;
+    const currentItem = items[current];
+    // Don't auto-rotate if on a video slide
+    if (currentItem?.kind === "video") return;
+
+    const timer = setInterval(() => {
+      setCurrent((c) => {
+        const next = (c + 1) % totalItems;
+        return next;
+      });
+    }, 20000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totalItems, current]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (!lightbox) return;
+      if (e.key === "ArrowLeft") prev();
+      if (e.key === "ArrowRight") next();
+      if (e.key === "Escape") setLightbox(false);
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lightbox]);
+
+  if (totalItems === 0) {
+    return (
+      <div className="aspect-[16/9] rounded-2xl bg-navy/5 dark:bg-white/5 flex items-center justify-center">
+        <span className="text-navy/30 dark:text-white/30 text-6xl">🏠</span>
+      </div>
+    );
+  }
+
+  const currentItem = items[current];
 
   return (
     <>
-      <div className="relative aspect-[16/9] rounded-2xl overflow-hidden group">
-        <Image
-          src={images[current]}
-          alt={`${title} - Image ${current + 1}`}
-          fill
-          className="object-cover cursor-pointer"
-          sizes="100vw"
-          priority
-          onClick={() => setLightbox(true)}
-        />
-        <button
-          onClick={prev}
-          className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-          aria-label="Previous image"
-        >
-          <ChevronLeft size={20} />
-        </button>
-        <button
-          onClick={next}
-          className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-          aria-label="Next image"
-        >
-          <ChevronRight size={20} />
-        </button>
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-          {images.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrent(i)}
-              className={`w-2 h-2 rounded-full transition-all ${
-                i === current ? "bg-gold w-6" : "bg-white/60"
-              }`}
-              aria-label={`Go to image ${i + 1}`}
+      {/* Main Display */}
+      <div className="relative aspect-[16/9] rounded-2xl overflow-hidden group bg-black">
+        {currentItem.kind === "image" ? (
+          <Image
+            src={currentItem.url}
+            alt={`${title} — ${current + 1} of ${totalItems}`}
+            fill
+            className="object-cover cursor-pointer transition-opacity duration-300"
+            sizes="100vw"
+            priority={current === 0}
+            onClick={() => setLightbox(true)}
+          />
+        ) : (
+          <div className="w-full h-full">
+            <PropertyVideoPlayer
+              video={currentItem.video}
+              className="w-full h-full"
             />
-          ))}
+          </div>
+        )}
+
+        {/* Gallery type indicator */}
+        {currentItem.kind === "video" && (
+          <div className="absolute top-4 left-4 bg-navy/70 text-white text-xs font-semibold px-3 py-1.5 rounded-full backdrop-blur-sm flex items-center gap-1.5">
+            <Play size={12} /> Video Tour
+          </div>
+        )}
+
+        {/* Navigation arrows — shown on hover */}
+        {totalItems > 1 && (
+          <>
+            <button
+              onClick={prev}
+              className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 dark:bg-navy/80 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-white"
+              aria-label="Previous"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <button
+              onClick={next}
+              className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 dark:bg-navy/80 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-white"
+              aria-label="Next"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </>
+        )}
+
+        {/* Dot indicators */}
+        {totalItems > 1 && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+            {items.map((item, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrent(i)}
+                className={`rounded-full transition-all duration-300 ${
+                  i === current
+                    ? "bg-gold w-6 h-2"
+                    : "bg-white/60 hover:bg-white w-2 h-2"
+                }`}
+                aria-label={`Go to item ${i + 1}`}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Counter badge */}
+        <div className="absolute bottom-4 right-4 bg-black/50 text-white text-xs font-medium px-2.5 py-1 rounded-full backdrop-blur-sm">
+          {current + 1} / {totalItems}
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-3 mt-3">
-        {images.map((img, i) => (
-          <button
-            key={i}
-            onClick={() => setCurrent(i)}
-            className={`relative aspect-[4/3] rounded-lg overflow-hidden ${
-              i === current ? "ring-2 ring-gold" : ""
-            }`}
-          >
-            <Image src={img} alt="" fill className="object-cover" sizes="150px" />
-          </button>
-        ))}
-      </div>
+      {/* Thumbnail strip */}
+      {totalItems > 1 && (
+        <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mt-3">
+          {items.map((item, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrent(i)}
+              className={`relative aspect-[4/3] rounded-lg overflow-hidden transition-all duration-200 ${
+                i === current
+                  ? "ring-2 ring-gold ring-offset-1 ring-offset-transparent scale-105"
+                  : "opacity-70 hover:opacity-100"
+              }`}
+              aria-label={`View item ${i + 1}`}
+            >
+              {item.kind === "image" ? (
+                <Image
+                  src={item.url}
+                  alt=""
+                  fill
+                  className="object-cover"
+                  sizes="150px"
+                />
+              ) : (
+                <div className="w-full h-full bg-navy/80 flex flex-col items-center justify-center gap-1">
+                  <Play size={16} className="text-gold" />
+                  <span className="text-white/60 text-[10px]">Video</span>
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
 
-      {lightbox && (
-        <div className="fixed inset-0 z-[70] bg-navy/95 flex items-center justify-center">
+      {/* Lightbox (images only) */}
+      {lightbox && currentItem.kind === "image" && (
+        <div
+          className="fixed inset-0 z-[70] bg-navy/97 flex items-center justify-center"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setLightbox(false);
+          }}
+        >
           <button
             onClick={() => setLightbox(false)}
-            className="absolute top-6 right-6 text-white hover:text-gold transition-colors"
-            aria-label="Close lightbox"
+            className="absolute top-6 right-6 text-white/80 hover:text-gold transition-colors z-10"
+            aria-label="Close"
           >
-            <X size={28} />
+            <X size={32} />
           </button>
-          <button onClick={prev} className="absolute left-6 text-white hover:text-gold" aria-label="Previous">
-            <ChevronLeft size={32} />
+          <button
+            onClick={prev}
+            className="absolute left-6 text-white/80 hover:text-gold transition-colors z-10"
+            aria-label="Previous"
+          >
+            <ChevronLeft size={40} />
           </button>
-          <div className="relative w-full max-w-5xl aspect-[16/9] mx-16">
-            <Image src={images[current]} alt={title} fill className="object-contain" sizes="90vw" />
+          <div className="relative w-full max-w-5xl aspect-[16/9] mx-20">
+            <Image
+              src={currentItem.url}
+              alt={`${title} — ${current + 1}`}
+              fill
+              className="object-contain"
+              sizes="90vw"
+              priority
+            />
           </div>
-          <button onClick={next} className="absolute right-6 text-white hover:text-gold" aria-label="Next">
-            <ChevronRight size={32} />
+          <button
+            onClick={next}
+            className="absolute right-6 text-white/80 hover:text-gold transition-colors z-10"
+            aria-label="Next"
+          >
+            <ChevronRight size={40} />
           </button>
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/50 text-sm">
+            {current + 1} of {totalItems} · Press ESC or click outside to close
+          </div>
         </div>
       )}
     </>

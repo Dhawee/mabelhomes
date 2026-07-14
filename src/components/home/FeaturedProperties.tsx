@@ -3,21 +3,38 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Bed, Bath, Maximize, MapPin, Heart, ChevronLeft, ChevronRight } from "lucide-react";
-import { PROPERTIES } from "@/data/site";
 import { formatPrice } from "@/lib/utils";
 import FadeIn from "@/components/ui/FadeIn";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 
-export default function FeaturedProperties() {
-  // Filter out shortlet apartments and regular apartments, showing For Sale properties only
-  const properties = PROPERTIES.filter(
-    (p) => p.status !== "Shortlet" && p.type !== "Apartment" && p.id !== "rosebowl-shortlet-1"
-  );
+import { Property } from "@/types";
+import { API_BASE_URL } from "@/config";
 
-  const [favorites, setFavorites] = useState<string[]>([]);
+export default function FeaturedProperties() {
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [favorites, setFavorites] = useState<(string | number)[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [visibleItems, setVisibleItems] = useState(3);
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/properties/?featured=true&page_size=100`)
+      .then((res) => res.json())
+      .then((data) => {
+        const list = Array.isArray(data) ? data : (data.results || []);
+        // Filter out shortlet apartments and regular apartments, showing Sale/Rent houses
+        const filtered = list.filter(
+          (p: Property) => p.status !== "Shortlet" && p.type !== "Apartment"
+        );
+        setProperties(filtered);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch featured properties:", err);
+        setLoading(false);
+      });
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -34,7 +51,7 @@ export default function FeaturedProperties() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const toggleFavorite = (id: string) => {
+  const toggleFavorite = (id: string | number) => {
     setFavorites((prev) =>
       prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
     );
@@ -52,6 +69,14 @@ export default function FeaturedProperties() {
 
   // Gap between items is 24px (gap-6)
   const gap = 24;
+
+  if (loading) {
+    return (
+      <section className="py-20 text-center text-navy/60 dark:text-white/60">
+        Loading featured properties...
+      </section>
+    );
+  }
 
   return (
     <section id="properties" className="py-12 md:py-16 px-6 md:px-12 bg-white dark:bg-navy border-b border-gray-100 dark:border-white/5">

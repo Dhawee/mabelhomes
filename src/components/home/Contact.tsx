@@ -1,8 +1,7 @@
-"use client";
-
-import { useState } from "react";
-import { Phone, Mail, Globe, MapPin, Send } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Phone, Mail, Globe, MapPin, Send, AlertCircle } from "lucide-react";
 import { SITE } from "@/data/site";
+import { API_BASE_URL } from "@/config";
 import FadeIn from "@/components/ui/FadeIn";
 
 const WhatsAppIcon = ({ className }: { className?: string }) => (
@@ -18,6 +17,7 @@ const WhatsAppIcon = ({ className }: { className?: string }) => (
 );
 
 export default function Contact() {
+  const [services, setServices] = useState<{ id: number; title: string; slug: string }[]>([]);
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -25,12 +25,60 @@ export default function Contact() {
     service: "",
     message: "",
   });
+  const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/services/`)
+      .then((res) => res.json())
+      .then((data) => {
+        setServices(Array.isArray(data) ? data : []);
+      })
+      .catch((err) => {
+        console.error("Failed to load services:", err);
+      });
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
+    setLoading(true);
+    setError(null);
+    setSubmitted(false);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/service-enquiries/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          service_type: form.service,
+          name: form.name,
+          email: form.email,
+          phone: form.phone,
+          message: form.message,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to submit enquiry.");
+      }
+
+      setSubmitted(true);
+      setForm({
+        name: "",
+        phone: "",
+        email: "",
+        service: "",
+        message: "",
+      });
+    } catch (err: any) {
+      setError(err.message || "An error occurred. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -120,56 +168,83 @@ export default function Contact() {
                 Send a Message
               </h3>
 
+              {error && (
+                <div className="flex items-center gap-2 p-3 mb-4 text-xs text-red-600 bg-red-50 dark:bg-red-950/20 dark:text-red-400 rounded-xl border border-red-200 dark:border-red-900/30">
+                  <AlertCircle size={14} className="shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              {submitted && (
+                <div className="p-3 mb-4 text-xs text-green-600 bg-green-50 dark:bg-green-950/20 dark:text-green-400 rounded-xl border border-green-200 dark:border-green-900/30 text-center font-medium">
+                  Message sent successfully! We will get in touch shortly.
+                </div>
+              )}
+
               <div className="space-y-5">
                 <input
                   type="text"
                   placeholder="Your Name"
                   required
+                  disabled={loading}
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full px-5 py-3.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-navy/30 text-sm focus:outline-none focus:border-gold"
+                  className="w-full px-5 py-3.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-navy/30 text-sm focus:outline-none focus:border-gold disabled:opacity-50"
                 />
                 <input
                   type="tel"
                   placeholder="Phone Number"
                   required
+                  disabled={loading}
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  className="w-full px-5 py-3.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-navy/30 text-sm focus:outline-none focus:border-gold"
+                  className="w-full px-5 py-3.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-navy/30 text-sm focus:outline-none focus:border-gold disabled:opacity-50"
                 />
                 <input
                   type="email"
                   placeholder="Email Address"
                   required
+                  disabled={loading}
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  className="w-full px-5 py-3.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-navy/30 text-sm focus:outline-none focus:border-gold"
+                  className="w-full px-5 py-3.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-navy/30 text-sm focus:outline-none focus:border-gold disabled:opacity-50"
                 />
                 <select
                   required
+                  disabled={loading}
                   value={form.service}
                   onChange={(e) => setForm({ ...form, service: e.target.value })}
-                  className="w-full px-5 py-3.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-navy/30 text-sm focus:outline-none focus:border-gold appearance-none"
+                  className="w-full px-5 py-3.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-navy/30 text-sm focus:outline-none focus:border-gold appearance-none disabled:opacity-50"
                 >
                   <option value="">Select Service</option>
-                  <option>Buying Property</option>
-                  <option>Selling Property</option>
-                  <option>Investment Consultation</option>
-                  <option>Property Inspection</option>
-                  <option>Shortlets</option>
-                  <option>Other</option>
+                  {services.map((s) => (
+                    <option key={s.id} value={s.slug}>{s.title}</option>
+                  ))}
+                  {services.length === 0 && (
+                    <>
+                      <option value="buying-property">Buying Property</option>
+                      <option value="selling-property">Selling Property</option>
+                      <option value="investment-consultation">Investment Consultation</option>
+                      <option value="property-marketing">Property Marketing</option>
+                      <option value="property-documentation">Property Documentation</option>
+                      <option value="property-inspection">Property Inspection</option>
+                      <option value="property-management">Property Management</option>
+                      <option value="shortlet-apartments">Shortlet Apartments</option>
+                    </>
+                  )}
                 </select>
                 <textarea
                   placeholder="Your Message"
                   rows={4}
                   required
+                  disabled={loading}
                   value={form.message}
                   onChange={(e) => setForm({ ...form, message: e.target.value })}
-                  className="w-full px-5 py-3.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-navy/30 text-sm focus:outline-none focus:border-gold resize-none"
+                  className="w-full px-5 py-3.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-navy/30 text-sm focus:outline-none focus:border-gold resize-none disabled:opacity-50"
                 />
-                <button type="submit" className="btn-gold w-full">
+                <button type="submit" disabled={loading} className="btn-gold w-full flex items-center justify-center gap-2">
                   <Send size={16} />
-                  {submitted ? "Message Sent!" : "Submit"}
+                  {loading ? "Submitting..." : "Submit"}
                 </button>
               </div>
             </form>

@@ -12,9 +12,11 @@ import {
   ArrowLeft,
   Calendar,
 } from "lucide-react";
-import { SERVICES, SITE } from "@/data/site";
+import { SITE } from "@/data/site";
 import FadeIn from "@/components/ui/FadeIn";
 import type { Metadata } from "next";
+import { API_BASE_URL } from "@/config";
+import { Service } from "@/types";
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   Home,
@@ -30,24 +32,55 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
+async function getService(slug: string): Promise<Service | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/services/${slug}/`, { next: { revalidate: 3600 } });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (err) {
+    console.error("Failed to fetch service detail:", err);
+    return null;
+  }
+}
+
+async function getOtherServices(slug: string): Promise<Service[]> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/services/`, { next: { revalidate: 3600 } });
+    if (!res.ok) return [];
+    const list = await res.json();
+    return list.filter((s: Service) => s.slug !== slug);
+  } catch (err) {
+    console.error("Failed to fetch other services:", err);
+    return [];
+  }
+}
+
 export async function generateStaticParams() {
-  return SERVICES.map((s) => ({ slug: s.slug }));
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/services/`);
+    if (!res.ok) return [];
+    const list = await res.json();
+    return list.map((s: any) => ({ slug: s.slug }));
+  } catch (err) {
+    console.error("Failed to generate services static params:", err);
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const service = SERVICES.find((s) => s.slug === slug);
+  const service = await getService(slug);
   if (!service) return { title: "Service Not Found" };
   return { title: service.title, description: service.description };
 }
 
 export default async function ServiceDetailPage({ params }: Props) {
   const { slug } = await params;
-  const service = SERVICES.find((s) => s.slug === slug);
+  const service = await getService(slug);
   if (!service) notFound();
 
   const Icon = iconMap[service.icon] || Home;
-  const otherServices = SERVICES.filter((s) => s.slug !== slug);
+  const otherServices = await getOtherServices(slug);
 
   return (
     <div className="pt-32 pb-20 bg-white dark:bg-navy text-navy dark:text-white">

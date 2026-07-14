@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import {
   Home,
   TrendingUp,
@@ -10,6 +13,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { SERVICES } from "@/data/site";
+import { API_BASE_URL } from "@/config";
+import { Service } from "@/types";
 import FadeIn from "@/components/ui/FadeIn";
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
@@ -24,6 +29,21 @@ const iconMap: Record<string, React.ComponentType<{ size?: number; className?: s
 };
 
 export default function Services() {
+  const [servicesList, setServicesList] = useState<Service[]>([]);
+  
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/services/`)
+      .then((res) => res.json())
+      .then((data) => {
+        setServicesList(Array.isArray(data) ? data : []);
+      })
+      .catch((err) => {
+        console.error("Failed to load services on home page:", err);
+      });
+  }, []);
+
+  const services = servicesList.length > 0 ? servicesList : SERVICES;
+
   return (
     <section id="services" className="section-padding bg-soft/30 dark:bg-navy/10 border-b border-gray-100 dark:border-white/5">
       <div className="max-w-7xl mx-auto px-6 md:px-12">
@@ -34,7 +54,7 @@ export default function Services() {
 
         {/* Services Grid (Block Row Design) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {SERVICES.map((service, i) => {
+          {services.map((service, i) => {
             const Icon = iconMap[service.icon] || Home;
 
             return (

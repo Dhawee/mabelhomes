@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Mabel Homes - Enquiry Details</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #2c3e50;
+            line-height: 1.6;
+            margin: 40px;
+        }
+        .header {
+            border-bottom: 2px solid #dfb76c;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1a252f;
+        }
+        .meta-title {
+            color: #dfb76c;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        h1 {
+            font-size: 20px;
+            margin: 0 0 10px 0;
+        }
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        .details-table th, .details-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        .details-table th {
+            width: 25%;
+            color: #7f8c8d;
+            font-weight: 600;
+        }
+        .message-box {
+            background-color: #f8f9fa;
+            border-left: 4px solid #dfb76c;
+            padding: 15px 20px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .badge-pending { background-color: #ffeaa7; color: #d63031; }
+        .badge-responded { background-color: #dff9fb; color: #0984e3; }
+        .badge-closed { background-color: #dfe6e9; color: #2d3436; }
+        
+        .no-print-section {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ecf0f1;
+            text-align: right;
+        }
+        .btn {
+            background-color: #dfb76c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .btn:hover { background-color: #cda252; }
+
+        @media print {
+            body { margin: 20px; font-size: 12pt; }
+            .no-print-section { display: none; }
+            .header { border-bottom: 2px solid #000; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <div class="logo">MABEL HOMES</div>
+            <div class="meta-title">Real Estate & Investments</div>
+        </div>
+        <div style="text-align: right;">
+            <div style="font-size: 14px; font-weight: bold;">Enquiry Record</div>
+            <div style="font-size: 12px; color: #7f8c8d;">Ref: #ENQ-{{ enquiry.id }}</div>
+        </div>
+    </div>
+
+    <h1>Enquiry Details</h1>
+    <table class="details-table">
+        <tr>
+            <th>Type</th>
+            <td>{{ type }}</td>
+        </tr>
+        <tr>
+            <th>Target Name</th>
+            <td><strong>{{ target_title }}</strong></td>
+        </tr>
+        <tr>
+            <th>Submitted By</th>
+            <td>{{ enquiry.name }}</td>
+        </tr>
+        <tr>
+            <th>Email</th>
+            <td>{{ enquiry.email }}</td>
+        </tr>
+        <tr>
+            <th>Phone</th>
+            <td>{{ enquiry.phone }}</td>
+        </tr>
+        <tr>
+            <th>Date Received</th>
+            <td>{{ enquiry.created_at|date:"F d, Y - H:i e" }}</td>
+        </tr>
+        <tr>
+            <th>Status</th>
+            <td>
+                {% if enquiry.status == 'Pending' %}
+                    <span class="badge badge-pending">Pending</span>
+                {% elif enquiry.status == 'Responded' %}
+                    <span class="badge badge-responded">Responded</span>
+                {% else %}
+                    <span class="badge badge-closed">{{ enquiry.status }}</span>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+
+    <h2 style="font-size: 16px; margin-top: 30px;">Message Content</h2>
+    <div class="message-box">{{ enquiry.message }}</div>
+
+    <div class="no-print-section">
+        <button onclick="window.print();" class="btn">Print Enquiry</button>
+        <a href="javascript:window.close();" class="btn" style="background-color: #95a5a6; margin-left: 10px;">Close Window</a>
+    </div>
+</body>
+</html>

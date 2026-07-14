@@ -11,6 +11,8 @@ import {
 import { SERVICES, SITE } from "@/data/site";
 import FadeIn from "@/components/ui/FadeIn";
 import type { Metadata } from "next";
+import { API_BASE_URL } from "@/config";
+import { Service } from "@/types";
 
 export const metadata: Metadata = {
   title: "Services",
@@ -27,7 +29,21 @@ const iconMap: Record<string, React.ComponentType<{ size?: number; className?: s
   Building2,
 };
 
-export default function ServicesPage() {
+async function getServices(): Promise<Service[]> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/services/`, { next: { revalidate: 3600 } });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (err) {
+    console.error("Failed to fetch services:", err);
+    return [];
+  }
+}
+
+export default async function ServicesPage() {
+  const servicesList = await getServices();
+  // Fallback to static data if API fetch fails or returns empty during build
+  const services = servicesList.length > 0 ? servicesList : SERVICES;
   return (
     <div className="pt-32 pb-20">
       <div className="max-w-7xl mx-auto px-6 md:px-12">
@@ -40,7 +56,7 @@ export default function ServicesPage() {
         </FadeIn>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {SERVICES.map((service, i) => {
+          {services.map((service, i) => {
             const Icon = iconMap[service.icon] || Home;
             return (
               <FadeIn key={service.id} delay={i * 0.1}>

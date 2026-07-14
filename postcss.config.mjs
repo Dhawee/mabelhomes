@@ -1,9 +1,14 @@
-/** @type {import('postcss-load-config').Config} */
+const isAdminPortal = process.cwd().includes("admin-portal");
+
 const config = {
-  plugins: {
-    tailwindcss: {},
-    autoprefixer: {},
-  },
+  plugins: isAdminPortal
+    ? {
+        "@tailwindcss/postcss": {},
+      }
+    : {
+        tailwindcss: {},
+        autoprefixer: {},
+      },
 };
 
 export default config;

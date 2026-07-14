@@ -1,13 +1,15 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Bed, Bath, Maximize, MapPin, Calendar, MessageCircle, Phone, Mail, ArrowLeft } from "lucide-react";
-import { PROPERTIES, SITE } from "@/data/site";
+import { Bed, Bath, Maximize, MapPin, Calendar, Phone, Mail, ArrowLeft } from "lucide-react";
+import { SITE } from "@/data/site";
 import { formatPrice, formatPriceFull } from "@/lib/utils";
 import PropertyGallery from "@/components/properties/PropertyGallery";
 import PropertyEnquiry from "@/components/properties/PropertyEnquiry";
 import FadeIn from "@/components/ui/FadeIn";
 import type { Metadata } from "next";
+import { API_BASE_URL } from "@/config";
+import { Property } from "@/types";
 
 const WhatsAppIcon = ({ className }: { className?: string }) => (
   <svg
@@ -25,29 +27,58 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
+async function getProperty(slug: string): Promise<Property | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/properties/${slug}/`, { next: { revalidate: 60 } });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (err) {
+    console.error("Failed to fetch property:", err);
+    return null;
+  }
+}
+
+async function getSimilarProperties(slug: string): Promise<Property[]> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/properties/${slug}/similar/`, { next: { revalidate: 300 } });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (err) {
+    console.error("Failed to fetch similar properties:", err);
+    return [];
+  }
+}
+
 export async function generateStaticParams() {
-  return PROPERTIES.map((p) => ({ slug: p.slug }));
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/properties/?page_size=100`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    const list = Array.isArray(data) ? data : (data.results || []);
+    return list.map((p: any) => ({ slug: p.slug }));
+  } catch (err) {
+    console.error("Failed to generate static params:", err);
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const property = PROPERTIES.find((p) => p.slug === slug);
+  const property = await getProperty(slug);
   if (!property) return { title: "Property Not Found" };
   return {
     title: property.title,
     description: property.description,
-    openGraph: { images: [property.images[0]] },
+    openGraph: { images: property.images && property.images.length > 0 ? [property.images[0]] : [] },
   };
 }
 
 export default async function PropertyDetailPage({ params }: Props) {
   const { slug } = await params;
-  const property = PROPERTIES.find((p) => p.slug === slug);
+  const property = await getProperty(slug);
   if (!property) notFound();
 
-  const related = PROPERTIES.filter(
-    (p) => p.id !== property.id && p.city === property.city
-  ).slice(0, 3);
+  const related = await getSimilarProperties(slug);
 
   return (
     <div className="pt-24 pb-20">
@@ -61,7 +92,11 @@ export default async function PropertyDetailPage({ params }: Props) {
           </Link>
         </div>
         <FadeIn>
-          <PropertyGallery images={property.images} title={property.title} />
+          <PropertyGallery
+            images={property.images}
+            videos={property.videos ?? []}
+            title={property.title}
+          />
         </FadeIn>
 
         <div className="grid lg:grid-cols-3 gap-10 mt-10">
@@ -106,9 +141,9 @@ export default async function PropertyDetailPage({ params }: Props) {
                   <Maximize size={20} className="text-gold" />
                   <span>{property.sqft.toLocaleString()} sqft</span>
                 </div>
-                {property.yearBuilt && (
+                {property.year_built && (
                   <div className="text-navy/60 dark:text-white/60">
-                    Built {property.yearBuilt}
+                    Built {property.year_built}
                   </div>
                 )}
               </div>
@@ -121,15 +156,15 @@ export default async function PropertyDetailPage({ params }: Props) {
               </div>
             </FadeIn>
 
-            {(property.buildingApproval || property.survey || property.documentTitle) && (
+            {(property.building_approval || property.survey || property.document_title) && (
               <FadeIn delay={0.25}>
                 <div className="p-6 rounded-2xl bg-gold/5 border border-gold/20">
                   <h3 className="font-heading text-lg text-navy dark:text-white mb-4 font-normal">Legal & Documentation Status</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {property.buildingApproval && (
+                    {property.building_approval && (
                       <div>
                         <p className="text-xs text-navy/50 dark:text-white/50 uppercase tracking-wider mb-1">Building Approval</p>
-                        <p className="text-sm font-semibold text-navy dark:text-white">{property.buildingApproval}</p>
+                        <p className="text-sm font-semibold text-navy dark:text-white">{property.building_approval}</p>
                       </div>
                     )}
                     {property.survey && (
@@ -138,10 +173,10 @@ export default async function PropertyDetailPage({ params }: Props) {
                         <p className="text-sm font-semibold text-navy dark:text-white">{property.survey}</p>
                       </div>
                     )}
-                    {property.documentTitle && (
+                    {property.document_title && (
                       <div>
                         <p className="text-xs text-navy/50 dark:text-white/50 uppercase tracking-wider mb-1">Title / Document</p>
-                        <p className="text-sm font-semibold text-navy dark:text-white">{property.documentTitle}</p>
+                        <p className="text-sm font-semibold text-navy dark:text-white">{property.document_title}</p>
                       </div>
                     )}
                   </div>
@@ -245,7 +280,7 @@ export default async function PropertyDetailPage({ params }: Props) {
 
 
             <FadeIn delay={0.4}>
-              <PropertyEnquiry propertyTitle={property.title} />
+              <PropertyEnquiry propertyTitle={property.title} propertyId={property.id} />
             </FadeIn>
           </div>
         </div>

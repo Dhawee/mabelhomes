@@ -1,0 +1,234 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}Reply to Enquiry — Mabel Homes Admin{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Home</a>
+  &rsaquo; <a href="{% url 'admin:core_'|add:opts.model_name|add:'_changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+  &rsaquo; <a href="../">Enquiry #{{ enquiry.id }}</a>
+  &rsaquo; Reply
+</div>
+{% endblock %}
+
+{% block content %}
+<style>
+  .reply-container { max-width: 760px; }
+  .reply-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  }
+  .reply-card h2 {
+    color: #417690;
+    margin-top: 0;
+    font-size: 18px;
+    border-bottom: 2px solid #417690;
+    padding-bottom: 10px;
+  }
+  .enquiry-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .enquiry-meta .field {
+    background: #f8f9fa;
+    border-radius: 4px;
+    padding: 10px 14px;
+  }
+  .enquiry-meta .field label {
+    font-size: 11px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .enquiry-meta .field span {
+    font-size: 14px;
+    color: #333;
+    font-weight: 500;
+  }
+  .enquiry-message {
+    background: #f8f9fa;
+    border-left: 4px solid #c9a84c;
+    padding: 14px 18px;
+    border-radius: 0 6px 6px 0;
+    font-size: 14px;
+    color: #444;
+    white-space: pre-wrap;
+    margin-bottom: 0;
+  }
+  .reply-form-field {
+    margin-bottom: 16px;
+  }
+  .reply-form-field label {
+    display: block;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 6px;
+    font-size: 13px;
+  }
+  .reply-form-field input[type="text"],
+  .reply-form-field textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: inherit;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+  }
+  .reply-form-field input[type="text"]:focus,
+  .reply-form-field textarea:focus {
+    outline: none;
+    border-color: #417690;
+    box-shadow: 0 0 0 3px rgba(65, 118, 144, 0.15);
+  }
+  .reply-form-field textarea {
+    min-height: 200px;
+    resize: vertical;
+  }
+  .btn-send {
+    background: #417690;
+    color: white;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-send:hover { background: #2c5f72; }
+  .btn-cancel {
+    background: transparent;
+    color: #666;
+    border: 1px solid #ccc;
+    padding: 12px 20px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    margin-left: 10px;
+    text-decoration: none;
+  }
+  .reply-history-item {
+    background: #f0f7fb;
+    border: 1px solid #d0e8f5;
+    border-radius: 6px;
+    padding: 14px 18px;
+    margin-bottom: 12px;
+  }
+  .reply-history-item .meta {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 8px;
+  }
+  .reply-history-item .body {
+    font-size: 14px;
+    color: #333;
+    white-space: pre-wrap;
+  }
+  .delivered-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: bold;
+    margin-left: 8px;
+  }
+  .delivered-yes { background: #d4edda; color: #155724; }
+  .delivered-no { background: #f8d7da; color: #721c24; }
+</style>
+
+<div class="reply-container">
+  <!-- Original Enquiry -->
+  <div class="reply-card">
+    <h2>📨 Original Enquiry — {{ type_label }}</h2>
+    <div class="enquiry-meta">
+      <div class="field">
+        <label>From</label>
+        <span>{{ enquiry.name }}</span>
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <span>{{ enquiry.email }}</span>
+      </div>
+      <div class="field">
+        <label>Phone</label>
+        <span>{{ enquiry.phone }}</span>
+      </div>
+      <div class="field">
+        <label>{{ type_label }}</label>
+        <span>{{ target_title }}</span>
+      </div>
+      <div class="field">
+        <label>Date Received</label>
+        <span>{{ enquiry.created_at|date:"N j, Y — H:i" }}</span>
+      </div>
+      <div class="field">
+        <label>Status</label>
+        <span>{{ enquiry.status }}</span>
+      </div>
+    </div>
+    <p style="margin: 0 0 8px; font-size: 12px; color: #888; font-weight: bold; text-transform: uppercase;">Message:</p>
+    <div class="enquiry-message">{{ enquiry.message }}</div>
+  </div>
+
+  <!-- Reply Form -->
+  <div class="reply-card">
+    <h2>✉️ Compose Reply</h2>
+    <form method="post">
+      {% csrf_token %}
+      <div class="reply-form-field">
+        <label for="reply-to">To</label>
+        <input type="text" value="{{ enquiry.email }}" disabled style="background:#f5f5f5;" />
+      </div>
+      <div class="reply-form-field">
+        <label for="subject">Subject *</label>
+        <input
+          type="text"
+          id="subject"
+          name="subject"
+          value="Re: Your enquiry about {{ target_title }}"
+          required
+        />
+      </div>
+      <div class="reply-form-field">
+        <label for="message">Message *</label>
+        <textarea id="message" name="message" required placeholder="Type your reply here..."></textarea>
+      </div>
+      <div>
+        <button type="submit" class="btn-send">📤 Send Reply</button>
+        <a href="../" class="btn-cancel">Cancel</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Reply History -->
+  {% if reply_history %}
+  <div class="reply-card">
+    <h2>📋 Reply History ({{ reply_history.count }})</h2>
+    {% for reply in reply_history %}
+    <div class="reply-history-item">
+      <div class="meta">
+        <strong>{{ reply.subject }}</strong>
+        — Sent by {{ reply.sender.username|default:"System" }}
+        on {{ reply.sent_at|date:"N j, Y H:i" }}
+        <span class="delivered-badge {% if reply.email_delivered %}delivered-yes{% else %}delivered-no{% endif %}">
+          {% if reply.email_delivered %}✓ Delivered{% else %}✗ Failed{% endif %}
+        </span>
+      </div>
+      <div class="body">{{ reply.message }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

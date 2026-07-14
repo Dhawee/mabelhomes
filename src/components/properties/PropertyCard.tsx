@@ -1,20 +1,94 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Bed, Bath, Maximize, MapPin, Heart, Share2, GitCompare } from "lucide-react";
+import { Bed, Bath, Maximize, MapPin, Heart, Share2 } from "lucide-react";
 import { Property } from "@/types";
 import { formatPrice } from "@/lib/utils";
 import FadeIn from "@/components/ui/FadeIn";
+import { API_BASE_URL } from "@/config";
 
 interface PropertyCardProps {
   property: Property;
   view?: "grid" | "list";
 }
 
+function getCookie(name: string): string {
+  if (typeof document === "undefined") return "";
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(";").shift() ?? "";
+  return "";
+}
+
 export default function PropertyCard({ property, view = "grid" }: PropertyCardProps) {
-  const [favorite, setFavorite] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(property.likes_count ?? 0);
+  const [liking, setLiking] = useState(false);
+  const [statusLoaded, setStatusLoaded] = useState(false);
+
+  // Restore liked state on mount by checking the backend
+  useEffect(() => {
+    let cancelled = false;
+    const checkLikeStatus = async () => {
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/api/properties/${property.slug}/like_status/`,
+          { credentials: "include" }
+        );
+        if (!cancelled && res.ok) {
+          const data = await res.json();
+          setLiked(data.liked);
+          setLikesCount(data.likes_count);
+          setStatusLoaded(true);
+        }
+      } catch {
+        // Non-critical — fallback to prop value
+        setStatusLoaded(true);
+      }
+    };
+    checkLikeStatus();
+    return () => { cancelled = true; };
+  }, [property.slug]);
+
+  const handleLike = async () => {
+    if (liking) return;
+    setLiking(true);
+
+    // Optimistic update
+    const wasLiked = liked;
+    const prevCount = likesCount;
+    setLiked(!wasLiked);
+    setLikesCount(wasLiked ? Math.max(0, likesCount - 1) : likesCount + 1);
+
+    try {
+      const csrfToken = getCookie("csrftoken");
+      const res = await fetch(`${API_BASE_URL}/api/properties/${property.slug}/like/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
+        },
+        credentials: "include",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setLiked(data.liked);
+        setLikesCount(data.likes_count);
+      } else {
+        // Revert optimistic update on error
+        setLiked(wasLiked);
+        setLikesCount(prevCount);
+      }
+    } catch {
+      // Revert on network failure
+      setLiked(wasLiked);
+      setLikesCount(prevCount);
+    } finally {
+      setLiking(false);
+    }
+  };
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -25,18 +99,32 @@ export default function PropertyCard({ property, view = "grid" }: PropertyCardPr
     }
   };
 
+  const primaryImage =
+    property.primary_image ||
+    (property.images && property.images.length > 0 ? property.images[0] : null);
+
+  const heartClass = liked
+    ? "fill-gold text-gold scale-110"
+    : "text-navy/60 dark:text-white/60";
+
   if (view === "list") {
     return (
       <FadeIn>
         <div className="luxury-card flex flex-col md:flex-row group hover:shadow-luxury-lg">
           <div className="relative md:w-80 aspect-[4/3] md:aspect-auto shrink-0 overflow-hidden">
-            <Image
-              src={property.images[0]}
-              alt={property.title}
-              fill
-              className="object-cover group-hover:scale-110 transition-transform duration-700"
-              sizes="320px"
-            />
+            {primaryImage ? (
+              <Image
+                src={primaryImage}
+                alt={property.title}
+                fill
+                className="object-cover group-hover:scale-110 transition-transform duration-700"
+                sizes="320px"
+              />
+            ) : (
+              <div className="w-full h-full bg-navy/10 flex items-center justify-center">
+                <span className="text-navy/30 text-4xl">🏠</span>
+              </div>
+            )}
             {property.luxury && (
               <span className="absolute top-4 left-4 px-3 py-1 bg-navy/80 text-white text-xs font-semibold rounded-full">
                 Luxury
@@ -77,13 +165,21 @@ export default function PropertyCard({ property, view = "grid" }: PropertyCardPr
     <FadeIn>
       <div className="luxury-card group hover:shadow-luxury-lg">
         <div className="relative aspect-[4/3] overflow-hidden">
-          <Image
-            src={property.images[0]}
-            alt={property.title}
-            fill
-            className="object-cover group-hover:scale-110 transition-transform duration-700"
-            sizes="(max-width: 768px) 100vw, 33vw"
-          />
+          {primaryImage ? (
+            <Image
+              src={primaryImage}
+              alt={property.title}
+              fill
+              className="object-cover group-hover:scale-110 transition-transform duration-700"
+              sizes="(max-width: 768px) 100vw, 33vw"
+            />
+          ) : (
+            <div className="w-full h-full bg-navy/10 flex items-center justify-center">
+              <span className="text-navy/30 text-6xl">🏠</span>
+            </div>
+          )}
+
+          {/* Status badges */}
           <div className="absolute top-4 left-4 flex gap-2">
             <span className="px-3 py-1 bg-gold text-white text-xs font-semibold rounded-full">
               {property.status}
@@ -94,23 +190,40 @@ export default function PropertyCard({ property, view = "grid" }: PropertyCardPr
               </span>
             )}
           </div>
+
+          {/* Action buttons */}
           <div className="absolute top-4 right-4 flex gap-2">
             <button
-              onClick={() => setFavorite(!favorite)}
-              className="w-9 h-9 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-colors"
-              aria-label="Save to favorites"
+              onClick={handleLike}
+              disabled={liking}
+              className="w-9 h-9 bg-white/90 dark:bg-navy/80 rounded-full flex items-center justify-center hover:bg-white dark:hover:bg-navy transition-all duration-200 shadow-sm"
+              aria-label={liked ? "Unlike property" : "Like property"}
+              title={`${likesCount} like${likesCount !== 1 ? "s" : ""}`}
             >
-              <Heart size={16} className={favorite ? "fill-gold text-gold" : "text-navy/60"} />
+              <Heart
+                size={16}
+                className={`transition-all duration-200 ${heartClass}`}
+                strokeWidth={liked ? 2.5 : 1.5}
+              />
             </button>
             <button
               onClick={handleShare}
-              className="w-9 h-9 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-colors"
+              className="w-9 h-9 bg-white/90 dark:bg-navy/80 rounded-full flex items-center justify-center hover:bg-white dark:hover:bg-navy transition-colors shadow-sm"
               aria-label="Share property"
             >
-              <Share2 size={16} className="text-navy/60" />
+              <Share2 size={16} className="text-navy/60 dark:text-white/60" />
             </button>
           </div>
+
+          {/* Likes count overlay */}
+          {likesCount > 0 && (
+            <div className="absolute bottom-4 right-4 flex items-center gap-1 bg-black/40 backdrop-blur-sm text-white text-xs font-medium px-2.5 py-1 rounded-full">
+              <Heart size={11} className={liked ? "fill-gold text-gold" : "fill-white text-white"} />
+              {likesCount}
+            </div>
+          )}
         </div>
+
         <div className="p-6">
           <div className="flex items-center gap-1 text-navy/50 dark:text-white/50 text-sm mb-2">
             <MapPin size={14} /> {property.location}
@@ -133,12 +246,12 @@ export default function PropertyCard({ property, view = "grid" }: PropertyCardPr
             </span>
           </div>
           <div className="flex gap-2">
-            <Link href={`/properties/${property.slug}`} className="btn-outline-gold flex-1 text-center text-sm !py-2.5">
+            <Link
+              href={`/properties/${property.slug}`}
+              className="btn-outline-gold flex-1 text-center text-sm !py-2.5"
+            >
               View Details
             </Link>
-            <button className="w-10 h-10 rounded-full border border-gray-200 dark:border-white/10 flex items-center justify-center hover:border-gold hover:text-gold transition-colors" aria-label="Compare">
-              <GitCompare size={14} />
-            </button>
           </div>
         </div>
       </div>

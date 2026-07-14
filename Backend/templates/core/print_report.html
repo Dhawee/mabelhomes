@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Mabel Homes - Enquiry Summary Report</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #2c3e50;
+            line-height: 1.4;
+            margin: 30px;
+        }
+        .header {
+            border-bottom: 2px solid #dfb76c;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1a252f;
+        }
+        .meta-title {
+            color: #dfb76c;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        h1 {
+            font-size: 20px;
+            margin: 0 0 15px 0;
+            text-align: center;
+        }
+        .report-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+        }
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .report-table th, .report-table td {
+            padding: 8px 10px;
+            text-align: left;
+            border: 1px solid #bdc3c7;
+        }
+        .report-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .badge-pending { background-color: #ffeaa7; color: #d63031; }
+        .badge-responded { background-color: #dff9fb; color: #0984e3; }
+        .badge-closed { background-color: #dfe6e9; color: #2d3436; }
+        
+        .no-print-section {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid #ecf0f1;
+            text-align: right;
+        }
+        .btn {
+            background-color: #dfb76c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-size: 13px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .btn:hover { background-color: #cda252; }
+
+        @media print {
+            body { margin: 15px; font-size: 10pt; }
+            .no-print-section { display: none; }
+            .header { border-bottom: 2px solid #000; }
+            .report-table th { background-color: #eee !important; -webkit-print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div style="float: left;">
+            <div class="logo">MABEL HOMES</div>
+            <div class="meta-title">Real Estate & Investments</div>
+        </div>
+        <div style="float: right; text-align: right; margin-top: 5px;">
+            <div style="font-size: 12px; font-weight: bold; color: #7f8c8d;">ADMINISTRATION PORTAL</div>
+        </div>
+        <div style="clear: both;"></div>
+    </div>
+
+    <h1>{{ title }}</h1>
+
+    <div class="report-info">
+        <div>Generated: {{ generated_at|date:"F d, Y - H:i e" }}</div>
+        <div>Total Records: {{ enquiries|length }}</div>
+    </div>
+
+    <table class="report-table">
+        <thead>
+            <tr>
+                <th style="width: 5%;">ID</th>
+                <th style="width: 15%;">Type</th>
+                <th style="width: 25%;">Target Property / Service</th>
+                <th style="width: 20%;">Contact Info</th>
+                <th style="width: 20%;">Message Preview</th>
+                <th style="width: 8%;">Status</th>
+                <th style="width: 7%;">Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for enq in enquiries %}
+            <tr>
+                <td>{{ enq.id }}</td>
+                <td>{{ enq.type_label }}</td>
+                <td><strong>{{ enq.target_title }}</strong></td>
+                <td>
+                    {{ enq.name }}<br>
+                    <span style="color:#7f8c8d; font-size: 11px;">
+                        📧 {{ enq.email }}<br>
+                        📞 {{ enq.phone }}
+                    </span>
+                </td>
+                <td style="color: #34495e;">{{ enq.message|slice:":60" }}{% if enq.message|length > 60 %}...{% endif %}</td>
+                <td>
+                    {% if enq.status == 'Pending' %}
+                        <span class="badge badge-pending">Pending</span>
+                    {% elif enq.status == 'Responded' %}
+                        <span class="badge badge-responded">Responded</span>
+                    {% else %}
+                        <span class="badge badge-closed">{{ enq.status }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ enq.created_at|date:"Y-m-d" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 20px;">No enquiries found matching selection.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="no-print-section">
+        <button onclick="window.print();" class="btn">Print Report</button>
+        <a href="javascript:window.close();" class="btn" style="background-color: #95a5a6; margin-left: 10px;">Close Window</a>
+    </div>
+</body>
+</html>

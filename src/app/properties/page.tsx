@@ -1,14 +1,17 @@
 "use client";
 
-import { useState, useMemo, Suspense } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Search, Grid3X3, List } from "lucide-react";
-import { PROPERTIES } from "@/data/site";
+import { Property } from "@/types";
+import { API_BASE_URL } from "@/config";
 import PropertyCard from "@/components/properties/PropertyCard";
 import FadeIn from "@/components/ui/FadeIn";
 
 function PropertiesContent() {
   const searchParams = useSearchParams();
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [location, setLocation] = useState(searchParams.get("location") || "");
   const [type, setType] = useState(searchParams.get("type") || "");
@@ -17,8 +20,23 @@ function PropertiesContent() {
   const [page, setPage] = useState(1);
   const perPage = 6;
 
+  useEffect(() => {
+    // Fetch all properties from API (requesting a high limit/page size to support client-side filtering/pagination on full set)
+    fetch(`${API_BASE_URL}/api/properties/?page_size=100`)
+      .then((res) => res.json())
+      .then((data) => {
+        const list = Array.isArray(data) ? data : (data.results || []);
+        setProperties(list);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch properties:", err);
+        setLoading(false);
+      });
+  }, []);
+
   const filtered = useMemo(() => {
-    return PROPERTIES.filter((p) => {
+    return properties.filter((p) => {
       if (search && !p.title.toLowerCase().includes(search.toLowerCase()) &&
           !p.location.toLowerCase().includes(search.toLowerCase())) return false;
       if (location && p.city !== location) return false;
@@ -26,13 +44,17 @@ function PropertiesContent() {
       if (status && p.status !== status) return false;
       return true;
     });
-  }, [search, location, type, status]);
+  }, [properties, search, location, type, status]);
 
   const totalPages = Math.ceil(filtered.length / perPage);
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
 
-  const cities = [...new Set(PROPERTIES.map((p) => p.city))];
-  const types = [...new Set(PROPERTIES.map((p) => p.type))];
+  const cities = useMemo(() => [...new Set(properties.map((p) => p.city))], [properties]);
+  const types = useMemo(() => [...new Set(properties.map((p) => p.type))], [properties]);
+
+  if (loading) {
+    return <div className="text-center py-20 text-navy/60 dark:text-white/60">Loading properties from Mabel Homes...</div>;
+  }
 
   return (
     <>
