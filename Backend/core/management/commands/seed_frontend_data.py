@@ -13,6 +13,10 @@ class Command(BaseCommand):
     help = "Seeds initial database records from the Next.js frontend mock data"
 
     def handle(self, *args, **options):
+        # Override email backend to console to prevent SMTP timeouts during seeding
+        settings.EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+        settings.EMAIL_BACKEND_IS_CONSOLE = True
+
         # Locate the frontend data file
         # Check standard relative paths from Backend directory
         possible_paths = [
