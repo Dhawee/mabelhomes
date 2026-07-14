@@ -248,6 +248,13 @@ else:
     )
     _EMAIL_BACKEND_REASON = "SMTP credentials configured"
 
+# Allow disabling email notifications via environment variable
+if os.getenv("DISABLE_EMAIL_NOTIFICATIONS", "False").lower() in ("true", "1", "yes"):
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+    _EMAIL_BACKEND_REASON = "Disabled via DISABLE_EMAIL_NOTIFICATIONS"
+
+EMAIL_TIMEOUT = 5  # SMTP connection/read timeout in seconds to prevent blocking
+
 # Expose which backend is active and why — used by notification_service for logging
 EMAIL_BACKEND_IS_CONSOLE = EMAIL_BACKEND == "django.core.mail.backends.console.EmailBackend"
 EMAIL_BACKEND_REASON = _EMAIL_BACKEND_REASON
