@@ -129,6 +129,7 @@ export default function PropertyGallery({
             sizes="100vw"
             priority={current === 0}
             onClick={() => setLightbox(true)}
+            unoptimized
           />
         ) : (
           <div className="w-full h-full">
@@ -211,6 +212,7 @@ export default function PropertyGallery({
                   fill
                   className="object-cover"
                   sizes="150px"
+                  unoptimized
                 />
               ) : (
                 <div className="relative w-full h-full bg-navy/80 flex flex-col items-center justify-center">
@@ -270,6 +272,7 @@ export default function PropertyGallery({
               className="object-contain"
               sizes="90vw"
               priority
+              unoptimized
             />
           </div>
           <button

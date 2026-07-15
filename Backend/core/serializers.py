@@ -1,3 +1,5 @@
+import os
+
 from django.contrib.auth.models import User, Group, Permission
 from rest_framework import serializers
 
@@ -5,6 +7,22 @@ from core.models import (AdminNotification, AuditLog, ContactMessage,
                          EnquiryReply, MediaAsset, Property, PropertyEnquiry,
                          PropertyImage, PropertyType, PropertyVideo,
                          ServiceEnquiry, ServiceType, UserProfile)
+
+# Base URL used when serializing without a request context (e.g. Next.js SSR fetch)
+_SITE_URL = os.getenv("SITE_URL", "").rstrip("/")
+
+
+def _build_url(request, url: str) -> str:
+    """Build an absolute URL from a relative path. Uses request if available, else SITE_URL env."""
+    if not url:
+        return url
+    if url.startswith("http://") or url.startswith("https://"):
+        return url
+    if request:
+        return request.build_absolute_uri(url)
+    if _SITE_URL:
+        return f"{_SITE_URL}{url}"
+    return url
 
 
 # ---------------------------------------------------------------------------
@@ -49,37 +67,21 @@ class PropertyImageSerializer(serializers.ModelSerializer):
     def get_image(self, obj):
         request = self.context.get("request")
         if obj.image_optimized:
-            return (
-                request.build_absolute_uri(obj.image_optimized.url)
-                if request
-                else obj.image_optimized.url
-            )
+            return _build_url(request, obj.image_optimized.url)
         if obj.image_upload:
-            return (
-                request.build_absolute_uri(obj.image_upload.url)
-                if request
-                else obj.image_upload.url
-            )
+            return _build_url(request, obj.image_upload.url)
         return obj.image_url
 
     def get_thumbnail(self, obj):
         request = self.context.get("request")
         if obj.image_thumbnail:
-            return (
-                request.build_absolute_uri(obj.image_thumbnail.url)
-                if request
-                else obj.image_thumbnail.url
-            )
+            return _build_url(request, obj.image_thumbnail.url)
         return self.get_image(obj)
 
     def get_original(self, obj):
         request = self.context.get("request")
         if obj.image_upload:
-            return (
-                request.build_absolute_uri(obj.image_upload.url)
-                if request
-                else obj.image_upload.url
-            )
+            return _build_url(request, obj.image_upload.url)
         return obj.image_url
 
 
@@ -111,11 +113,7 @@ class PropertyVideoSerializer(serializers.ModelSerializer):
         """Returns absolute URL for uploaded video files."""
         if obj.video_upload:
             request = self.context.get("request")
-            return (
-                request.build_absolute_uri(obj.video_upload.url)
-                if request
-                else obj.video_upload.url
-            )
+            return _build_url(request, obj.video_upload.url)
         return obj.video_url
 
     def get_embed_url(self, obj):
@@ -190,12 +188,11 @@ class PropertySerializer(serializers.ModelSerializer):
         primary = obj.images.filter(is_primary=True).first() or obj.images.first()
         if primary:
             if primary.image_optimized:
-                url = primary.image_optimized.url
+                return _build_url(request, primary.image_optimized.url)
             elif primary.image_upload:
-                url = primary.image_upload.url
+                return _build_url(request, primary.image_upload.url)
             else:
                 return primary.image_url
-            return request.build_absolute_uri(url) if request else url
         return None
 
     def get_images(self, obj):
@@ -205,17 +202,9 @@ class PropertySerializer(serializers.ModelSerializer):
         urls = []
         for img in images:
             if img.image_optimized:
-                url = (
-                    request.build_absolute_uri(img.image_optimized.url)
-                    if request
-                    else img.image_optimized.url
-                )
+                url = _build_url(request, img.image_optimized.url)
             elif img.image_upload:
-                url = (
-                    request.build_absolute_uri(img.image_upload.url)
-                    if request
-                    else img.image_upload.url
-                )
+                url = _build_url(request, img.image_upload.url)
             else:
                 url = img.image_url
             if url:

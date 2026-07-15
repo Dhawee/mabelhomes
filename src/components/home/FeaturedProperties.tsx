@@ -23,11 +23,7 @@ export default function FeaturedProperties() {
       .then((res) => res.json())
       .then((data) => {
         const list = Array.isArray(data) ? data : (data.results || []);
-        // Filter out shortlet apartments and regular apartments, showing Sale/Rent houses
-        const filtered = list.filter(
-          (p: Property) => p.status !== "Shortlet" && p.type !== "Apartment"
-        );
-        setProperties(filtered);
+        setProperties(list);
         setLoading(false);
       })
       .catch((err) => {
@@ -134,13 +130,20 @@ export default function FeaturedProperties() {
               >
                 <div className="luxury-card group hover:shadow-luxury-lg h-full flex flex-col justify-between bg-white dark:bg-navy/40">
                   <div className="relative aspect-[4/3] overflow-hidden">
-                    <Image
-                      src={property.images[0]}
-                      alt={property.title}
-                      fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-700"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    />
+                    {property.images && property.images.length > 0 ? (
+                      <Image
+                        src={property.primary_image || property.images[0]}
+                        alt={property.title}
+                        fill
+                        className="object-cover group-hover:scale-110 transition-transform duration-700"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-navy/10 to-gold/10 flex items-center justify-center">
+                        <span className="text-navy/30 text-sm">No image</span>
+                      </div>
+                    )}
                     <div className="absolute top-4 left-4 flex gap-2">
                       <span className="px-3 py-1 bg-gold text-white text-xs font-semibold rounded-full font-heading">
                         {property.status}

@@ -228,22 +228,25 @@ export default async function PropertyDetailPage({ params }: Props) {
               </FadeIn>
             )}
 
-            <FadeIn delay={0.5}>
-              <div>
-                <h2 className="font-heading text-2xl text-navy dark:text-white mb-4">Location</h2>
-                <div className="rounded-2xl overflow-hidden h-80">
-                  <iframe
-                    title="Property Location"
-                    src={`https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d10000!2d${property.coordinates.lng}!3d${property.coordinates.lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zM!5e0!3m2!1sen!2s!4v1700000000000!5m2!1sen!2s`}
-                    width="100%"
-                    height="100%"
-                    style={{ border: 0 }}
-                    allowFullScreen
-                    loading="lazy"
-                  />
+            {property.coordinates?.lat && property.coordinates?.lng && (
+              <FadeIn delay={0.5}>
+                <div>
+                  <h2 className="font-heading text-2xl text-navy dark:text-white mb-4">Location</h2>
+                  <div className="rounded-2xl overflow-hidden h-80">
+                    <iframe
+                      title="Property Location"
+                      src={`https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d10000!2d${property.coordinates.lng}!3d${property.coordinates.lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zM!5e0!3m2!1sen!2s!4v1700000000000!5m2!1sen!2s`}
+                      width="100%"
+                      height="100%"
+                      style={{ border: 0 }}
+                      allowFullScreen
+                      loading="lazy"
+                    />
+                  </div>
                 </div>
-              </div>
-            </FadeIn>
+              </FadeIn>
+            )}
+
           </div>
 
           <div className="space-y-6">
@@ -307,11 +310,25 @@ export default async function PropertyDetailPage({ params }: Props) {
             <FadeIn>
               <h2 className="font-heading text-3xl text-navy dark:text-white mb-8">Similar Properties</h2>
             </FadeIn>
+
             <div className="grid md:grid-cols-3 gap-8">
               {related.map((p) => (
                 <Link key={p.id} href={`/properties/${p.slug}`} className="luxury-card group overflow-hidden hover:shadow-luxury-lg">
                   <div className="relative aspect-[4/3] overflow-hidden">
-                    <Image src={p.images[0]} alt={p.title} fill className="object-cover group-hover:scale-110 transition-transform duration-700" sizes="33vw" />
+                    {p.primary_image || (p.images && p.images.length > 0) ? (
+                      <Image
+                        src={p.primary_image || p.images[0]}
+                        alt={p.title}
+                        fill
+                        className="object-cover group-hover:scale-110 transition-transform duration-700"
+                        sizes="33vw"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-navy/10 flex items-center justify-center">
+                        <span className="text-navy/30 text-4xl">🏠</span>
+                      </div>
+                    )}
                   </div>
                   <div className="p-5">
                     <h3 className="font-heading text-lg text-navy dark:text-white mb-1">{p.title}</h3>

@@ -119,6 +119,7 @@ export default function PropertyCard({ property, view = "grid" }: PropertyCardPr
                 fill
                 className="object-cover group-hover:scale-110 transition-transform duration-700"
                 sizes="320px"
+                unoptimized
               />
             ) : (
               <div className="w-full h-full bg-navy/10 flex items-center justify-center">
@@ -176,6 +177,7 @@ export default function PropertyCard({ property, view = "grid" }: PropertyCardPr
               fill
               className="object-cover group-hover:scale-110 transition-transform duration-700"
               sizes="(max-width: 768px) 100vw, 33vw"
+              unoptimized
             />
           ) : (
             <div className="w-full h-full bg-navy/10 flex items-center justify-center">
