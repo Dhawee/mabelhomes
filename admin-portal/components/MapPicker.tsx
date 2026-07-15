@@ -99,6 +99,7 @@ export default function MapPicker({ lat, lng, address, onChange }: MapPickerProp
   const handleSearch = async (e?: React.FormEvent | React.MouseEvent | React.KeyboardEvent) => {
     if (e) {
       e.preventDefault();
+      e.stopPropagation();
     }
     if (!searchQuery.trim()) return;
     setGeocoding(true);
@@ -166,6 +167,7 @@ export default function MapPicker({ lat, lng, address, onChange }: MapPickerProp
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
+      e.stopPropagation();
       handleSearch(e);
     }
   };

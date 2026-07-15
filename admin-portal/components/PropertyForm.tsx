@@ -436,11 +436,12 @@ export default function PropertyForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-extrabold text-gray-900">{title}</h1>
         <button
-          type="submit"
+          type="button"
+          onClick={handleSubmit}
           disabled={loading || fetchingTypes}
           className="btn btn-primary px-8 py-2 text-sm"
         >
@@ -1015,6 +1016,6 @@ export default function PropertyForm({
           </div>
         </div>
       </div>
-    </form>
+    </div>
   );
 }
