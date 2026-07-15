@@ -96,8 +96,10 @@ export default function MapPicker({ lat, lng, address, onChange }: MapPickerProp
   };
 
   // Search Address via Nominatim
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSearch = async (e?: React.FormEvent | React.MouseEvent | React.KeyboardEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
     if (!searchQuery.trim()) return;
     setGeocoding(true);
 
@@ -161,22 +163,35 @@ export default function MapPicker({ lat, lng, address, onChange }: MapPickerProp
     );
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSearch(e);
+    }
+  };
+
   return (
     <div className="space-y-3">
       {/* Search Bar & GPS controls */}
       <div className="flex gap-2 flex-wrap">
-        <form onSubmit={handleSearch} className="flex-1 flex gap-2 min-w-[260px]">
+        <div className="flex-1 flex gap-2 min-w-[260px]">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder="Search address (e.g. Lekki Phase 1, Lagos)..."
             className="form-input flex-1"
           />
-          <button type="submit" disabled={geocoding} className="btn btn-outline py-2 text-sm shrink-0">
+          <button
+            type="button"
+            onClick={(e) => handleSearch(e)}
+            disabled={geocoding}
+            className="btn btn-outline py-2 text-sm shrink-0"
+          >
             {geocoding ? "Searching..." : "Search"}
           </button>
-        </form>
+        </div>
         <button
           type="button"
           onClick={handleUseCurrentLocation}

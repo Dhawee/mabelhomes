@@ -31,7 +31,7 @@ export default function EditPropertyPage({ params }: Props) {
       });
   }, [slug]);
 
-  const handleSubmit = async (formData: any) => {
+  const handleSubmit = async (formData: any, tempImages: any[] = [], tempVideos: any[] = []) => {
     setSaving(true);
     try {
       await api.patch(`/api/properties/${slug}/`, formData);
@@ -40,6 +40,7 @@ export default function EditPropertyPage({ params }: Props) {
     } catch (err: any) {
       console.error("Failed to update property:", err);
       alert("Unable to save property. Please check that all required fields are filled correctly and try again.");
+      throw err;
     } finally {
       setSaving(false);
     }

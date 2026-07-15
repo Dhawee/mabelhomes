@@ -6,6 +6,18 @@
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+export class ApiError extends Error {
+  status: number;
+  data: any;
+
+  constructor(message: string, status: number, data: any) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.data = data;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Token management (localStorage in browser only)
 // ---------------------------------------------------------------------------
@@ -200,7 +212,7 @@ export async function apiFetch<T = unknown>(
       errorData?.error ||
       errorData?.non_field_errors?.[0] ||
       `Request failed with status ${res.status}`;
-    throw new Error(message);
+    throw new ApiError(message, res.status, errorData);
   }
 
   // Return empty object for 204 No Content
