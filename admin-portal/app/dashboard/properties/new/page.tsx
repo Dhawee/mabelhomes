@@ -16,7 +16,8 @@ export default function NewPropertyPage() {
       alert("Property created successfully!");
       router.push(`/dashboard/properties/${created.slug}`);
     } catch (err: any) {
-      alert(err.message || "Failed to create property.");
+      console.error("Failed to create property:", err);
+      alert("Unable to save property. Please check that all required fields are filled correctly and try again.");
     } finally {
       setSaving(false);
     }

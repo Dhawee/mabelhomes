@@ -29,7 +29,7 @@ interface Props {
 
 async function getProperty(slug: string): Promise<Property | null> {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/properties/${slug}/`, { next: { revalidate: 60 } });
+    const res = await fetch(`${API_BASE_URL}/api/properties/${slug}/`, { cache: "no-store" });
     if (!res.ok) return null;
     return await res.json();
   } catch (err) {
@@ -40,7 +40,7 @@ async function getProperty(slug: string): Promise<Property | null> {
 
 async function getSimilarProperties(slug: string): Promise<Property[]> {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/properties/${slug}/similar/`, { next: { revalidate: 300 } });
+    const res = await fetch(`${API_BASE_URL}/api/properties/${slug}/similar/`, { cache: "no-store" });
     if (!res.ok) return [];
     return await res.json();
   } catch (err) {
@@ -48,6 +48,13 @@ async function getSimilarProperties(slug: string): Promise<Property[]> {
     return [];
   }
 }
+
+const hasValue = (val: any) => {
+  if (val === null || val === undefined || val === "") return false;
+  if (val === 0 || val === "0" || val === 0.0) return false;
+  if (typeof val === "string" && (val.toLowerCase() === "none" || val.toLowerCase() === "null")) return false;
+  return true;
+};
 
 export async function generateStaticParams() {
   try {
@@ -94,6 +101,7 @@ export default async function PropertyDetailPage({ params }: Props) {
         <FadeIn>
           <PropertyGallery
             images={property.images}
+            imagesDetails={property.images_details}
             videos={property.videos ?? []}
             title={property.title}
           />
@@ -127,23 +135,28 @@ export default async function PropertyDetailPage({ params }: Props) {
 
             <FadeIn delay={0.1}>
               <div className="flex flex-wrap gap-6 p-6 luxury-card">
-                {property.bedrooms > 0 && (
+                {hasValue(property.bedrooms) && (
                   <div className="flex items-center gap-2">
                     <Bed size={20} className="text-gold" />
                     <span>{property.bedrooms} Bedrooms</span>
                   </div>
                 )}
-                <div className="flex items-center gap-2">
-                  <Bath size={20} className="text-gold" />
-                  <span>{property.bathrooms} Bathrooms</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Maximize size={20} className="text-gold" />
-                  <span>{property.sqft.toLocaleString()} sqft</span>
-                </div>
-                {property.year_built && (
-                  <div className="text-navy/60 dark:text-white/60">
-                    Built {property.year_built}
+                {hasValue(property.bathrooms) && (
+                  <div className="flex items-center gap-2">
+                    <Bath size={20} className="text-gold" />
+                    <span>{property.bathrooms} Bathrooms</span>
+                  </div>
+                )}
+                {hasValue(property.sqft) && (
+                  <div className="flex items-center gap-2">
+                    <Maximize size={20} className="text-gold" />
+                    <span>{property.sqft.toLocaleString()} sqft</span>
+                  </div>
+                )}
+                {hasValue(property.year_built) && (
+                  <div className="text-navy/60 dark:text-white/60 flex items-center gap-2">
+                    <Calendar size={20} className="text-gold" />
+                    <span>Built {property.year_built}</span>
                   </div>
                 )}
               </div>
@@ -156,24 +169,24 @@ export default async function PropertyDetailPage({ params }: Props) {
               </div>
             </FadeIn>
 
-            {(property.building_approval || property.survey || property.document_title) && (
+            {(hasValue(property.building_approval) || hasValue(property.survey) || hasValue(property.document_title)) && (
               <FadeIn delay={0.25}>
                 <div className="p-6 rounded-2xl bg-gold/5 border border-gold/20">
                   <h3 className="font-heading text-lg text-navy dark:text-white mb-4 font-normal">Legal & Documentation Status</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {property.building_approval && (
+                    {hasValue(property.building_approval) && (
                       <div>
                         <p className="text-xs text-navy/50 dark:text-white/50 uppercase tracking-wider mb-1">Building Approval</p>
                         <p className="text-sm font-semibold text-navy dark:text-white">{property.building_approval}</p>
                       </div>
                     )}
-                    {property.survey && (
+                    {hasValue(property.survey) && (
                       <div>
                         <p className="text-xs text-navy/50 dark:text-white/50 uppercase tracking-wider mb-1">Survey</p>
                         <p className="text-sm font-semibold text-navy dark:text-white">{property.survey}</p>
                       </div>
                     )}
-                    {property.document_title && (
+                    {hasValue(property.document_title) && (
                       <div>
                         <p className="text-xs text-navy/50 dark:text-white/50 uppercase tracking-wider mb-1">Title / Document</p>
                         <p className="text-sm font-semibold text-navy dark:text-white">{property.document_title}</p>
@@ -184,32 +197,36 @@ export default async function PropertyDetailPage({ params }: Props) {
               </FadeIn>
             )}
 
-            <FadeIn delay={0.3}>
-              <div>
-                <h2 className="font-heading text-2xl text-navy dark:text-white mb-4">Features</h2>
-                <div className="grid md:grid-cols-2 gap-3">
-                  {property.features.map((f) => (
-                    <div key={f} className="flex items-center gap-2 text-sm text-navy/70 dark:text-white/70">
-                      <div className="w-1.5 h-1.5 rounded-full bg-gold" />
-                      {f}
-                    </div>
-                  ))}
+            {property.features && property.features.length > 0 && (
+              <FadeIn delay={0.3}>
+                <div>
+                  <h2 className="font-heading text-2xl text-navy dark:text-white mb-4">Features</h2>
+                  <div className="grid md:grid-cols-2 gap-3">
+                    {property.features.map((f) => (
+                      <div key={f} className="flex items-center gap-2 text-sm text-navy/70 dark:text-white/70">
+                        <div className="w-1.5 h-1.5 rounded-full bg-gold" />
+                        {f}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </FadeIn>
+              </FadeIn>
+            )}
 
-            <FadeIn delay={0.4}>
-              <div>
-                <h2 className="font-heading text-2xl text-navy dark:text-white mb-4">Amenities</h2>
-                <div className="grid md:grid-cols-3 gap-3">
-                  {property.amenities.map((a) => (
-                    <div key={a} className="luxury-card p-4 text-sm text-center text-navy/70 dark:text-white/70">
-                      {a}
-                    </div>
-                  ))}
+            {property.amenities && property.amenities.length > 0 && (
+              <FadeIn delay={0.4}>
+                <div>
+                  <h2 className="font-heading text-2xl text-navy dark:text-white mb-4">Amenities</h2>
+                  <div className="grid md:grid-cols-3 gap-3">
+                    {property.amenities.map((a) => (
+                      <div key={a} className="luxury-card p-4 text-sm text-center text-navy/70 dark:text-white/70">
+                        {a}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </FadeIn>
+              </FadeIn>
+            )}
 
             <FadeIn delay={0.5}>
               <div>

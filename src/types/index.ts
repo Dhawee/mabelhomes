@@ -37,6 +37,14 @@ export interface Property {
   luxury: boolean;
   primary_image?: string | null;
   images: string[];
+  images_details?: {
+    id: number;
+    image: string;
+    thumbnail: string;
+    original: string;
+    order: number;
+    is_primary: boolean;
+  }[];
   videos?: PropertyVideo[];
   description: string;
   features: string[];

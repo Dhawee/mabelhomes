@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from rest_framework.views import APIView
@@ -128,6 +128,27 @@ class PropertyViewSet(viewsets.ModelViewSet):
             is_visible=is_visible_val,
             show_deleted=show_deleted_val,
         )
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            logger.error(f"Property creation validation errors: {serializer.errors}")
+            print("Property creation validation errors:", serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        if not serializer.is_valid():
+            logger.error(f"Property update validation errors: {serializer.errors}")
+            print("Property update validation errors:", serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        self.perform_update(serializer)
+        return Response(serializer.data)
 
     def perform_create(self, serializer):
         instance = serializer.save()
@@ -393,13 +414,30 @@ class PropertyViewSet(viewsets.ModelViewSet):
 class PropertyVideoViewSet(viewsets.ModelViewSet):
     serializer_class = PropertyVideoSerializer
     permission_classes = [DjangoModelPermissionsOrStaffExplicit]
-    parser_classes = [MultiPartParser, FormParser]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
 
     def get_queryset(self):
         return PropertyVideo.objects.all().order_by("order", "created_at")
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            logger.error(f"Property video creation validation errors: {serializer.errors}")
+            print("Property video creation validation errors:", serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
     def perform_create(self, serializer):
         serializer.save()
+
+    @action(detail=True, methods=["post"])
+    def set_primary(self, request, pk=None):
+        instance = self.get_object()
+        instance.is_primary = True
+        instance.save()
+        return Response({"status": "primary video set", "is_primary": True}, status=status.HTTP_200_OK)
 
 
 # ---------------------------------------------------------------------------
@@ -1327,6 +1365,17 @@ class PropertyImageViewSet(viewsets.ModelViewSet):
     queryset = PropertyImage.objects.all().order_by("order")
     serializer_class = PropertyImageSerializer
     permission_classes = [DjangoModelPermissionsOrStaffExplicit]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            logger.error(f"Property image creation validation errors: {serializer.errors}")
+            print("Property image creation validation errors:", serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def perform_create(self, serializer):
         instance = serializer.save()
@@ -1366,6 +1415,13 @@ class PropertyImageViewSet(viewsets.ModelViewSet):
             description=f"Removed image from property '{title}'",
             request=self.request
         )
+
+    @action(detail=True, methods=["post"])
+    def set_primary(self, request, pk=None):
+        instance = self.get_object()
+        instance.is_primary = True
+        instance.save()
+        return Response({"status": "primary image set", "is_primary": True}, status=status.HTTP_200_OK)
 
 
 class MetadataView(APIView):

@@ -16,6 +16,17 @@ interface PropertyTypeChoice {
   name: string;
 }
 
+function getVideoThumbnail(video: any): string | null {
+  if (video.video_type === "youtube" && video.video_url) {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = video.video_url.match(regExp);
+    if (match && match[2].length === 11) {
+      return `https://img.youtube.com/vi/${match[2]}/mqdefault.jpg`;
+    }
+  }
+  return null;
+}
+
 interface PropertyFormProps {
   initialData?: Partial<Property>;
   onSubmit: (data: any) => Promise<void>;
@@ -147,7 +158,8 @@ export default function PropertyForm({
         const res = await api.post<any>("/api/property-images/", formData);
         setImages((prev) => [...prev, res]);
       } catch (err: any) {
-        setImageError(err.message || `Failed to upload image "${file.name}".`);
+        console.error("Image upload failed:", err);
+        setImageError(`Image upload failed for "${file.name}". Please try again.`);
       }
     }
     setUploadProgress(null);
@@ -172,7 +184,8 @@ export default function PropertyForm({
       await api.delete(`/api/property-images/${imageId}/`);
       setImages((prev) => prev.filter((img) => img.id !== imageId));
     } catch (err: any) {
-      alert(err.message || "Failed to delete image.");
+      console.error("Failed to delete image:", err);
+      alert("Unable to delete image. Please try again.");
     }
   };
 
@@ -186,7 +199,8 @@ export default function PropertyForm({
         }))
       );
     } catch (err: any) {
-      alert(err.message || "Failed to set cover image.");
+      console.error("Failed to set cover image:", err);
+      alert("Unable to set cover image. Please try again.");
     }
   };
 
@@ -197,7 +211,7 @@ export default function PropertyForm({
         prev.map((img) => (img.id === imageId ? { ...img, order } : img))
       );
     } catch (err: any) {
-      console.error(err);
+      console.error("Failed to update image order:", err);
     }
   };
 
@@ -224,7 +238,7 @@ export default function PropertyForm({
         formData.append("property", String(initialData.id));
         formData.append("video_upload", videoFile!);
         formData.append("title", videoTitle || videoFile!.name);
-        formData.append("video_type", "MP4");
+        formData.append("video_type", "upload");
         formData.append("order", String(videos.length + 1));
         
         const res = await api.post<any>("/api/property-videos/", formData);
@@ -244,7 +258,8 @@ export default function PropertyForm({
       }
       setVideoTitle("");
     } catch (err: any) {
-      alert(err.message || "Failed to add video.");
+      console.error("Failed to add video:", err);
+      alert("Failed to add video. Please ensure the file is correct or the URL is valid, and try again.");
     } finally {
       setVideoUploading(false);
     }
@@ -256,16 +271,41 @@ export default function PropertyForm({
       await api.delete(`/api/property-videos/${videoId}/`);
       setVideos((prev) => prev.filter((v) => v.id !== videoId));
     } catch (err: any) {
-      alert(err.message || "Failed to delete video.");
+      console.error("Failed to delete video:", err);
+      alert("Unable to delete video. Please try again.");
+    }
+  };
+
+  const handleVideoOrderChange = async (videoId: number, order: number) => {
+    try {
+      const res = await api.patch<any>(`/api/property-videos/${videoId}/`, { order });
+      setVideos((prev) => prev.map((vid) => (vid.id === videoId ? res : vid)));
+    } catch (err: any) {
+      console.error("Failed to update video order:", err);
+      alert("Failed to update video order. Please try again.");
+    }
+  };
+
+  const handleSetCoverVideo = async (videoId: number) => {
+    try {
+      await api.post<any>(`/api/property-videos/${videoId}/set_primary/`, {});
+      // Refresh videos and images to update primary flags
+      const refreshedVideos = await api.get<any>(`/api/property-videos/?property=${initialData.id}`);
+      setVideos(Array.isArray(refreshedVideos) ? refreshedVideos : refreshedVideos.results || []);
+      const refreshedImages = await api.get<any>(`/api/property-images/?property=${initialData.id}`);
+      setImages(Array.isArray(refreshedImages) ? refreshedImages : refreshedImages.results || []);
+    } catch (err: any) {
+      console.error("Failed to set cover video:", err);
+      alert("Failed to set cover video. Please try again.");
     }
   };
 
   return (
-    <div className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-extrabold text-gray-900">{title}</h1>
         <button
-          onClick={handleSubmit}
+          type="submit"
           disabled={loading || fetchingTypes}
           className="btn btn-primary px-8 py-2 text-sm"
         >
@@ -285,7 +325,7 @@ export default function PropertyForm({
                 type="text"
                 required
                 className="form-input"
-                value={form.title}
+                value={form.title || ""}
                 onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
                 placeholder="e.g. 5 Bedroom Fully Detached Mansion"
               />
@@ -297,7 +337,7 @@ export default function PropertyForm({
                 className="form-input"
                 required
                 rows={5}
-                value={form.description}
+                value={form.description || ""}
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                 placeholder="Detailed description of the property..."
               />
@@ -323,7 +363,7 @@ export default function PropertyForm({
                 ) : (
                   <select
                     className="form-input"
-                    value={form.property_type}
+                    value={form.property_type || ""}
                     onChange={(e) => setForm((f) => ({ ...f, property_type: Number(e.target.value) }))}
                   >
                     {types.map((t) => (
@@ -346,7 +386,7 @@ export default function PropertyForm({
                 <input
                   type="number"
                   className="form-input"
-                  value={form.bedrooms}
+                  value={form.bedrooms || ""}
                   onChange={(e) => setForm((f) => ({ ...f, bedrooms: Number(e.target.value) }))}
                 />
               </div>
@@ -355,7 +395,7 @@ export default function PropertyForm({
                 <input
                   type="number"
                   className="form-input"
-                  value={form.bathrooms}
+                  value={form.bathrooms || ""}
                   onChange={(e) => setForm((f) => ({ ...f, bathrooms: Number(e.target.value) }))}
                 />
               </div>
@@ -364,7 +404,7 @@ export default function PropertyForm({
                 <input
                   type="number"
                   className="form-input"
-                  value={form.sqft}
+                  value={form.sqft || ""}
                   onChange={(e) => setForm((f) => ({ ...f, sqft: Number(e.target.value) }))}
                 />
               </div>
@@ -373,7 +413,7 @@ export default function PropertyForm({
                 <input
                   type="number"
                   className="form-input"
-                  value={form.year_built}
+                  value={form.year_built || ""}
                   onChange={(e) => setForm((f) => ({ ...f, year_built: Number(e.target.value) }))}
                 />
               </div>
@@ -390,7 +430,7 @@ export default function PropertyForm({
                   type="text"
                   required
                   className="form-input"
-                  value={form.city}
+                  value={form.city || ""}
                   onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
                 />
               </div>
@@ -400,7 +440,7 @@ export default function PropertyForm({
                   type="text"
                   required
                   className="form-input"
-                  value={form.location}
+                  value={form.location || ""}
                   onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
                 />
               </div>
@@ -412,7 +452,7 @@ export default function PropertyForm({
                 <input
                   type="text"
                   className="form-input"
-                  value={form.state}
+                  value={form.state || ""}
                   onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))}
                   placeholder="e.g. Lagos"
                 />
@@ -422,7 +462,7 @@ export default function PropertyForm({
                 <input
                   type="text"
                   className="form-input"
-                  value={form.country}
+                  value={form.country || ""}
                   onChange={(e) => setForm((f) => ({ ...f, country: e.target.value }))}
                   placeholder="e.g. Nigeria"
                 />
@@ -560,7 +600,7 @@ export default function PropertyForm({
                       <label className="form-label">Video Label / Title</label>
                       <input
                         type="text"
-                        value={videoTitle}
+                        value={videoTitle || ""}
                         onChange={(e) => setVideoTitle(e.target.value)}
                         placeholder="e.g. Living Room Tour"
                         className="form-input text-xs"
@@ -571,19 +611,41 @@ export default function PropertyForm({
                   {videoType === "upload" ? (
                     <div>
                       <label className="form-label">Select MP4 Video File</label>
-                      <input
-                        type="file"
-                        accept="video/mp4"
-                        onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
-                        className="form-input text-xs"
-                      />
+                      <div
+                        onDragOver={handleDragOver}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          const file = e.dataTransfer.files?.[0];
+                          if (file && file.type.startsWith("video/")) {
+                            setVideoFile(file);
+                          }
+                        }}
+                        className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-gold transition cursor-pointer relative"
+                      >
+                        <input
+                          type="file"
+                          accept="video/mp4"
+                          onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                        <div className="space-y-1">
+                          {videoFile ? (
+                            <p className="text-xs font-semibold text-gold">Selected: {videoFile.name}</p>
+                          ) : (
+                            <>
+                              <p className="text-xs font-semibold text-gray-600">Drag MP4 here or click to select</p>
+                              <p className="text-[10px] text-gray-400">MP4 up to 50MB</p>
+                            </>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     <div>
                       <label className="form-label">Video Link URL</label>
                       <input
                         type="url"
-                        value={videoUrlInput}
+                        value={videoUrlInput || ""}
                         onChange={(e) => setVideoUrlInput(e.target.value)}
                         placeholder="e.g. https://www.youtube.com/watch?v=..."
                         className="form-input text-xs"
@@ -604,20 +666,70 @@ export default function PropertyForm({
                 {videos.length > 0 ? (
                   <div className="space-y-3">
                     <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide">Current Videos</h3>
-                    <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {videos.sort((a, b) => a.order - b.order).map((vid) => (
-                        <div key={vid.id} className="card card-body p-3 bg-gray-50 flex items-center justify-between border border-gray-100">
-                          <div>
-                            <p className="text-xs font-semibold text-gray-800">{vid.title || "Video Link"}</p>
-                            <span className="text-[10px] text-gray-400 capitalize">{vid.video_type || "External"}</span>
+                        <div key={vid.id} className="relative group rounded-lg overflow-hidden border border-gray-100 bg-gray-50 flex flex-col sm:flex-row">
+                          {/* Thumbnail / Platform Indicator */}
+                          <div className="relative w-full sm:w-28 h-20 bg-black flex items-center justify-center shrink-0">
+                            {getVideoThumbnail(vid) ? (
+                              <img
+                                src={getVideoThumbnail(vid)!}
+                                alt="Video thumbnail"
+                                className="w-full h-full object-cover opacity-60"
+                              />
+                            ) : (
+                              <div className="text-gold text-2xl">📹</div>
+                            )}
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                              <span className="text-white text-[9px] bg-navy/80 px-2 py-0.5 rounded-full capitalize">
+                                {vid.video_type}
+                              </span>
+                            </div>
+                            {vid.is_primary && (
+                              <span className="absolute top-1 left-1 bg-gold text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow">
+                                COVER
+                              </span>
+                            )}
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteVideo(vid.id)}
-                            className="text-red-500 hover:text-red-700 text-xs shrink-0 font-bold"
-                          >
-                            🗑️ Delete
-                          </button>
+                          {/* Video Details and Actions */}
+                          <div className="p-2.5 flex-1 flex flex-col justify-between space-y-2">
+                            <div>
+                              <p className="text-xs font-bold text-gray-800 line-clamp-1">{vid.title || "Video Asset"}</p>
+                              <p className="text-[10px] text-gray-400 truncate max-w-[200px]" title={vid.video_src || vid.video_url || ""}>
+                                {vid.video_src || vid.video_url}
+                              </p>
+                            </div>
+                            <div className="flex items-center justify-between gap-2 pt-1 border-t border-gray-100">
+                              <div className="flex items-center gap-1">
+                                <label className="text-[9px] text-gray-500 font-bold uppercase">Order</label>
+                                <input
+                                  type="number"
+                                  value={vid.order || 0}
+                                  onChange={(e) => handleVideoOrderChange(vid.id, Number(e.target.value))}
+                                  className="w-10 text-center text-[10px] border border-gray-200 rounded p-0.5"
+                                />
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                {!vid.is_primary && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSetCoverVideo(vid.id)}
+                                    className="text-gold hover:text-gold/80 text-[10px] font-bold"
+                                  >
+                                    Set Cover
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteVideo(vid.id)}
+                                  className="text-red-500 hover:text-red-700 text-[10px] font-bold"
+                                  title="Delete video"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -641,7 +753,7 @@ export default function PropertyForm({
               <input
                 type="text"
                 className="form-input"
-                value={form.seo_title}
+                value={form.seo_title || ""}
                 onChange={(e) => setForm((f) => ({ ...f, seo_title: e.target.value }))}
                 placeholder="Recommended: 50-60 characters"
               />
@@ -651,7 +763,7 @@ export default function PropertyForm({
               <textarea
                 className="form-input text-xs"
                 rows={3}
-                value={form.seo_description}
+                value={form.seo_description || ""}
                 onChange={(e) => setForm((f) => ({ ...f, seo_description: e.target.value }))}
                 placeholder="Recommended: 150-160 characters describing the property listing"
               />
@@ -661,7 +773,7 @@ export default function PropertyForm({
               <input
                 type="text"
                 className="form-input"
-                value={form.seo_keywords}
+                value={form.seo_keywords || ""}
                 onChange={(e) => setForm((f) => ({ ...f, seo_keywords: e.target.value }))}
                 placeholder="e.g. luxury home lagos, mansion for sale lekki"
               />
@@ -730,7 +842,7 @@ export default function PropertyForm({
               <textarea
                 className="form-input text-xs"
                 rows={3}
-                value={form.features_input}
+                value={form.features_input || ""}
                 onChange={(e) => setForm((f) => ({ ...f, features_input: e.target.value }))}
                 placeholder="e.g. Modern Design, BQ, Swimming Pool"
               />
@@ -740,7 +852,7 @@ export default function PropertyForm({
               <textarea
                 className="form-input text-xs"
                 rows={3}
-                value={form.amenities_input}
+                value={form.amenities_input || ""}
                 onChange={(e) => setForm((f) => ({ ...f, amenities_input: e.target.value }))}
                 placeholder="e.g. 24/7 Power, Secure Estate Access"
               />
@@ -748,6 +860,6 @@ export default function PropertyForm({
           </div>
         </div>
       </div>
-    </div>
+    </form>
   );
 }

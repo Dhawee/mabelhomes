@@ -145,12 +145,16 @@ export default function PropertyCard({ property, view = "grid" }: PropertyCardPr
                   <Bed size={14} /> {property.bedrooms}
                 </span>
               )}
-              <span className="flex items-center gap-1">
-                <Bath size={14} /> {property.bathrooms}
-              </span>
-              <span className="flex items-center gap-1">
-                <Maximize size={14} /> {property.sqft.toLocaleString()} sqft
-              </span>
+              {property.bathrooms > 0 && (
+                <span className="flex items-center gap-1">
+                  <Bath size={14} /> {property.bathrooms}
+                </span>
+              )}
+              {property.sqft > 0 && (
+                <span className="flex items-center gap-1">
+                  <Maximize size={14} /> {property.sqft.toLocaleString()} sqft
+                </span>
+              )}
             </div>
             <Link href={`/properties/${property.slug}`} className="btn-outline-gold w-fit text-sm !py-2">
               View Details
@@ -238,12 +242,16 @@ export default function PropertyCard({ property, view = "grid" }: PropertyCardPr
                 <Bed size={14} /> {property.bedrooms} Beds
               </span>
             )}
-            <span className="flex items-center gap-1">
-              <Bath size={14} /> {property.bathrooms} Baths
-            </span>
-            <span className="flex items-center gap-1">
-              <Maximize size={14} /> {property.sqft.toLocaleString()} sqft
-            </span>
+            {property.bathrooms > 0 && (
+              <span className="flex items-center gap-1">
+                <Bath size={14} /> {property.bathrooms} Baths
+              </span>
+            )}
+            {property.sqft > 0 && (
+              <span className="flex items-center gap-1">
+                <Maximize size={14} /> {property.sqft.toLocaleString()} sqft
+              </span>
+            )}
           </div>
           <div className="flex gap-2">
             <Link

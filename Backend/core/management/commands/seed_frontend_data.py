@@ -12,6 +12,13 @@ from core.models import Property, PropertyImage, PropertyType, ServiceType
 class Command(BaseCommand):
     help = "Seeds initial database records from the Next.js frontend mock data"
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--services-only",
+            action="store_true",
+            help="Seed only service types, skipping properties and property types",
+        )
+
     def handle(self, *args, **options):
         # Override email backend to console to prevent SMTP timeouts during seeding
         settings.EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
@@ -79,60 +86,79 @@ class Command(BaseCommand):
                     self.stdout.write(f" - Created Service: {service.title}")
 
             # 2. Seed Property Types & Properties
-            self.stdout.write("Seeding PropertyType and Property records...")
-            for p in properties_json:
-                # Resolve Property Type
-                type_name = p.get("type", "Apartment")
-                prop_type, _ = PropertyType.objects.get_or_create(name=type_name)
+            services_only = options.get("services_only", False)
+            if services_only:
+                self.stdout.write("Seeding PropertyType records (services-only flag enabled)...")
+                default_types = [
+                    {"name": "Apartment", "slug": "apartment"},
+                    {"name": "Mansion", "slug": "mansion"},
+                    {"name": "Duplex", "slug": "duplex"},
+                    {"name": "Terrace", "slug": "terrace"},
+                    {"name": "Commercial", "slug": "commercial"},
+                ]
+                for item in default_types:
+                    pt, created = PropertyType.objects.get_or_create(
+                        name=item["name"],
+                        defaults={"slug": item["slug"]}
+                    )
+                    if created:
+                        self.stdout.write(f" - Created Property Type: {item['name']}")
+                self.stdout.write("Skipping property records seeding.")
+            else:
+                self.stdout.write("Seeding PropertyType and Property records...")
+                for p in properties_json:
+                    # Resolve Property Type
+                    type_name = p.get("type", "Apartment")
+                    prop_type, _ = PropertyType.objects.get_or_create(name=type_name)
 
-                # Resolve coordinates
-                coords = p.get("coordinates", {})
-                lat = coords.get("lat", 6.4388)
-                lng = coords.get("lng", 3.5218)
+                    # Resolve coordinates
+                    coords = p.get("coordinates", {})
+                    lat = coords.get("lat", 6.4388)
+                    lng = coords.get("lng", 3.5218)
 
-                # Create Property
-                prop, created = Property.objects.get_or_create(
-                    slug=p["slug"],
-                    defaults={
-                        "title": p["title"],
-                        "location": p["location"],
-                        "city": p.get("city", p["location"].split(",")[-1].strip()),
-                        "price": p["price"],
-                        "bedrooms": p.get("bedrooms", 0),
-                        "bathrooms": p.get("bathrooms", 0),
-                        "sqft": p.get("sqft", 0),
-                        "status": p.get("status", "For Sale"),
-                        "property_type": prop_type,
-                        "featured": p.get("featured", False),
-                        "luxury": p.get("luxury", False),
-                        "description": p.get("description", ""),
-                        "building_approval": p.get("buildingApproval"),
-                        "survey": p.get("survey"),
-                        "document_title": p.get("documentTitle"),
-                        "features": p.get("features", []),
-                        "amenities": p.get("amenities", []),
-                        "year_built": p.get("yearBuilt"),
-                        "parking": p.get("parking"),
-                        "latitude": lat,
-                        "longitude": lng,
-                    },
-                )
+                    # Create Property
+                    prop, created = Property.objects.get_or_create(
+                        slug=p["slug"],
+                        defaults={
+                            "title": p["title"],
+                            "location": p["location"],
+                            "city": p.get("city", p["location"].split(",")[-1].strip()),
+                            "price": p["price"],
+                            "bedrooms": p.get("bedrooms", 0),
+                            "bathrooms": p.get("bathrooms", 0),
+                            "sqft": p.get("sqft", 0),
+                            "status": p.get("status", "For Sale"),
+                            "property_type": prop_type,
+                            "featured": p.get("featured", False),
+                            "luxury": p.get("luxury", False),
+                            "description": p.get("description", ""),
+                            "building_approval": p.get("buildingApproval"),
+                            "survey": p.get("survey"),
+                            "document_title": p.get("documentTitle"),
+                            "features": p.get("features", []),
+                            "amenities": p.get("amenities", []),
+                            "year_built": p.get("yearBuilt"),
+                            "parking": p.get("parking"),
+                            "latitude": lat,
+                            "longitude": lng,
+                        },
+                    )
 
-                if created:
-                    self.stdout.write(f" - Created Property: {prop.title}")
+                    if created:
+                        self.stdout.write(f" - Created Property: {prop.title}")
 
-                    # Add Images
-                    images = p.get("images", [])
-                    for index, img_url in enumerate(images):
-                        PropertyImage.objects.create(
-                            property=prop,
-                            image_url=img_url,
-                            order=index + 1,
-                            is_primary=(index == 0),
-                        )
-                        self.stdout.write(
-                            f"   * Added image {index + 1} for {prop.title}"
-                        )
+                        # Add Images
+                        images = p.get("images", [])
+                        for index, img_url in enumerate(images):
+                            PropertyImage.objects.create(
+                                property=prop,
+                                image_url=img_url,
+                                order=index + 1,
+                                is_primary=(index == 0),
+                            )
+                            self.stdout.write(
+                                f"   * Added image {index + 1} for {prop.title}"
+                            )
 
         self.stdout.write(
             self.style.SUCCESS("Database seeding completed successfully!")

@@ -11,30 +11,63 @@ type GalleryItem =
   | { kind: "image"; url: string; order: number }
   | { kind: "video"; video: PropertyVideo; order: number };
 
+function getVideoThumbnail(video: PropertyVideo): string | null {
+  if (video.video_type === "youtube" && video.video_url) {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = video.video_url.match(regExp);
+    if (match && match[2].length === 11) {
+      return `https://img.youtube.com/vi/${match[2]}/mqdefault.jpg`;
+    }
+  }
+  return null;
+}
+
 interface PropertyGalleryProps {
   images: string[];
+  imagesDetails?: any[];
   videos?: PropertyVideo[];
   title: string;
 }
 
 export default function PropertyGallery({
   images,
+  imagesDetails = [],
   videos = [],
   title,
 }: PropertyGalleryProps) {
   // Build unified, ordered gallery items
-  const items: GalleryItem[] = [
-    ...images.map((url, i) => ({
-      kind: "image" as const,
-      url,
-      order: i,
-    })),
-    ...videos.map((video) => ({
+  const items: GalleryItem[] = [];
+
+  if (imagesDetails && imagesDetails.length > 0) {
+    imagesDetails.forEach((img) => {
+      const url = img.image_optimized || img.image || img.original || img.image_url;
+      if (url) {
+        items.push({
+          kind: "image" as const,
+          url,
+          order: img.order,
+        });
+      }
+    });
+  } else {
+    images.forEach((url, i) => {
+      items.push({
+        kind: "image" as const,
+        url,
+        order: i,
+      });
+    });
+  }
+
+  videos.forEach((video) => {
+    items.push({
       kind: "video" as const,
       video,
-      order: 1000 + video.order, // videos after images by default
-    })),
-  ].sort((a, b) => a.order - b.order);
+      order: video.order,
+    });
+  });
+
+  items.sort((a, b) => a.order - b.order);
 
   const [current, setCurrent] = useState(0);
   const [lightbox, setLightbox] = useState(false);
@@ -180,9 +213,26 @@ export default function PropertyGallery({
                   sizes="150px"
                 />
               ) : (
-                <div className="w-full h-full bg-navy/80 flex flex-col items-center justify-center gap-1">
-                  <Play size={16} className="text-gold" />
-                  <span className="text-white/60 text-[10px]">Video</span>
+                <div className="relative w-full h-full bg-navy/80 flex flex-col items-center justify-center">
+                  {getVideoThumbnail(item.video) ? (
+                    <>
+                      <Image
+                        src={getVideoThumbnail(item.video)!}
+                        alt=""
+                        fill
+                        className="object-cover opacity-50"
+                        sizes="150px"
+                      />
+                      <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
+                        <Play size={20} className="text-gold fill-gold" />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <Play size={16} className="text-gold" />
+                      <span className="text-white/60 text-[10px]">Video</span>
+                    </>
+                  )}
                 </div>
               )}
             </button>

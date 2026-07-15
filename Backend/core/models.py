@@ -256,6 +256,7 @@ def validate_video_file(file):
         )
 
     # Check magic bytes for MP4 / WebM / MOV
+    file.seek(0)
     header = file.read(12)
     file.seek(0)
 

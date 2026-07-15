@@ -19,6 +19,7 @@ def validate_image_file(file):
         )
 
     # 2. Check magic byte signature
+    file.seek(0)
     header = file.read(12)
     file.seek(0)  # Reset file pointer after reading
 
@@ -54,11 +55,7 @@ def resize_and_compress(image_file, target_width, quality=80):
 
     # Keep original format or fallback to JPEG
     orig_format = img.format if img.format else "JPEG"
-    content_type = (
-        image_file.content_type
-        if image_file.content_type
-        else f"image/{orig_format.lower()}"
-    )
+    content_type = getattr(image_file, "content_type", None) or f"image/{orig_format.lower()}"
 
     width, height = img.size
     if width > target_width:

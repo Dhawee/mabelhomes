@@ -44,7 +44,7 @@ class PropertyImageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PropertyImage
-        fields = ["id", "image", "thumbnail", "original", "order", "is_primary"]
+        fields = ["id", "property", "image_upload", "image", "thumbnail", "original", "order", "is_primary"]
 
     def get_image(self, obj):
         request = self.context.get("request")
@@ -95,6 +95,8 @@ class PropertyVideoSerializer(serializers.ModelSerializer):
         model = PropertyVideo
         fields = [
             "id",
+            "property",
+            "video_upload",
             "video_type",
             "video_src",
             "video_url",
@@ -171,6 +173,8 @@ class PropertySerializer(serializers.ModelSerializer):
             "year_built",
             "parking",
             "video_tour",
+            "latitude",
+            "longitude",
             "coordinates",
             "likes_count",
             "seo_title",

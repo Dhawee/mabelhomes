@@ -18,11 +18,7 @@ if __name__ == "__main__":
     # 1. Run migrations
     run_cmd(["python", "manage.py", "migrate"])
     
-    # 2. Create superuser from environment variables if present
-    if os.getenv("DJANGO_SUPERUSER_USERNAME") and os.getenv("DJANGO_SUPERUSER_PASSWORD"):
-        print("Superuser environment variables detected. Attempting automatic creation...")
-        run_cmd(["python", "manage.py", "createsuperuser", "--noinput"])
-    else:
-        print("DJANGO_SUPERUSER_USERNAME/PASSWORD env variables not set. Skipping createsuperuser.")
-        
+    # 2. Seed only service types (idempotent, skipping properties as requested)
+    run_cmd(["python", "manage.py", "seed_frontend_data", "--services-only"])
+    
     print("Deployment setup completed successfully!")

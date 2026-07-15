@@ -25,7 +25,8 @@ export default function EditPropertyPage({ params }: Props) {
         setLoading(false);
       })
       .catch((err) => {
-        setError(err.message || "Failed to load property.");
+        console.error("Failed to load property:", err);
+        setError("Unable to load property details. Please try again.");
         setLoading(false);
       });
   }, [slug]);
@@ -37,7 +38,8 @@ export default function EditPropertyPage({ params }: Props) {
       alert("Property updated successfully!");
       router.push(`/dashboard/properties/${slug}`);
     } catch (err: any) {
-      alert(err.message || "Failed to save property.");
+      console.error("Failed to update property:", err);
+      alert("Unable to save property. Please check that all required fields are filled correctly and try again.");
     } finally {
       setSaving(false);
     }
