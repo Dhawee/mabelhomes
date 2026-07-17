@@ -1,94 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Bed, Bath, Maximize, MapPin, Heart, Share2 } from "lucide-react";
 import { Property } from "@/types";
 import { formatPrice } from "@/lib/utils";
 import FadeIn from "@/components/ui/FadeIn";
-import { API_BASE_URL } from "@/config";
+import SafeImage from "@/components/ui/SafeImage";
+import PropertyLikeButton from "./PropertyLikeButton";
 
 interface PropertyCardProps {
   property: Property;
   view?: "grid" | "list";
 }
 
-function getCookie(name: string): string {
-  if (typeof document === "undefined") return "";
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop()?.split(";").shift() ?? "";
-  return "";
-}
-
 export default function PropertyCard({ property, view = "grid" }: PropertyCardProps) {
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(property.likes_count ?? 0);
-  const [liking, setLiking] = useState(false);
-  const [statusLoaded, setStatusLoaded] = useState(false);
-
-  // Restore liked state on mount by checking the backend
-  useEffect(() => {
-    let cancelled = false;
-    const checkLikeStatus = async () => {
-      try {
-        const res = await fetch(
-          `${API_BASE_URL}/api/properties/${property.slug}/like_status/`,
-          { credentials: "include" }
-        );
-        if (!cancelled && res.ok) {
-          const data = await res.json();
-          setLiked(data.liked);
-          setLikesCount(data.likes_count);
-          setStatusLoaded(true);
-        }
-      } catch {
-        // Non-critical — fallback to prop value
-        setStatusLoaded(true);
-      }
-    };
-    checkLikeStatus();
-    return () => { cancelled = true; };
-  }, [property.slug]);
-
-  const handleLike = async () => {
-    if (liking) return;
-    setLiking(true);
-
-    // Optimistic update
-    const wasLiked = liked;
-    const prevCount = likesCount;
-    setLiked(!wasLiked);
-    setLikesCount(wasLiked ? Math.max(0, likesCount - 1) : likesCount + 1);
-
-    try {
-      const csrfToken = getCookie("csrftoken");
-      const res = await fetch(`${API_BASE_URL}/api/properties/${property.slug}/like/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
-        },
-        credentials: "include",
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setLiked(data.liked);
-        setLikesCount(data.likes_count);
-      } else {
-        // Revert optimistic update on error
-        setLiked(wasLiked);
-        setLikesCount(prevCount);
-      }
-    } catch {
-      // Revert on network failure
-      setLiked(wasLiked);
-      setLikesCount(prevCount);
-    } finally {
-      setLiking(false);
-    }
-  };
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -103,23 +32,20 @@ export default function PropertyCard({ property, view = "grid" }: PropertyCardPr
     property.primary_image ||
     (property.images && property.images.length > 0 ? property.images[0] : null);
 
-  const heartClass = liked
-    ? "fill-gold text-gold scale-110"
-    : "text-navy/60 dark:text-white/60";
-
   if (view === "list") {
     return (
       <FadeIn>
         <div className="luxury-card flex flex-col md:flex-row group hover:shadow-luxury-lg">
           <div className="relative md:w-80 aspect-[4/3] md:aspect-auto shrink-0 overflow-hidden">
             {primaryImage ? (
-              <Image
+              <SafeImage
                 src={primaryImage}
                 alt={property.title}
                 fill
                 className="object-cover group-hover:scale-110 transition-transform duration-700"
                 sizes="320px"
-                unoptimized
+                propertySlug={property.slug}
+                imageId="primary_list"
               />
             ) : (
               <div className="w-full h-full bg-navy/10 flex items-center justify-center">
@@ -171,13 +97,14 @@ export default function PropertyCard({ property, view = "grid" }: PropertyCardPr
       <div className="luxury-card group hover:shadow-luxury-lg">
         <div className="relative aspect-[4/3] overflow-hidden">
           {primaryImage ? (
-            <Image
+            <SafeImage
               src={primaryImage}
               alt={property.title}
               fill
               className="object-cover group-hover:scale-110 transition-transform duration-700"
               sizes="(max-width: 768px) 100vw, 33vw"
-              unoptimized
+              propertySlug={property.slug}
+              imageId="primary_grid"
             />
           ) : (
             <div className="w-full h-full bg-navy/10 flex items-center justify-center">
@@ -198,24 +125,21 @@ export default function PropertyCard({ property, view = "grid" }: PropertyCardPr
           </div>
 
           {/* Action buttons */}
-          <div className="absolute top-4 right-4 flex gap-2">
-            <button
-              onClick={handleLike}
-              disabled={liking}
-              className="w-9 h-9 bg-white/90 dark:bg-navy/80 rounded-full flex items-center justify-center hover:bg-white dark:hover:bg-navy transition-all duration-200 shadow-sm"
-              aria-label={liked ? "Unlike property" : "Like property"}
-              title={`${likesCount} like${likesCount !== 1 ? "s" : ""}`}
-            >
-              <Heart
-                size={16}
-                className={`transition-all duration-200 ${heartClass}`}
-                strokeWidth={liked ? 2.5 : 1.5}
-              />
-            </button>
+          <div className="absolute top-4 right-4 flex gap-2 z-20">
+            <PropertyLikeButton
+              property={property}
+              variant="image-badge"
+              className="relative top-0 right-0 shadow-sm"
+              onLikeToggle={(l, c) => {
+                setLiked(l);
+                setLikesCount(c);
+              }}
+            />
             <button
               onClick={handleShare}
-              className="w-9 h-9 bg-white/90 dark:bg-navy/80 rounded-full flex items-center justify-center hover:bg-white dark:hover:bg-navy transition-colors shadow-sm"
+              className="w-9 h-9 bg-white/90 dark:bg-navy/80 rounded-full flex items-center justify-center hover:bg-white dark:hover:bg-navy transition-colors shadow-sm cursor-pointer border-none"
               aria-label="Share property"
+              type="button"
             >
               <Share2 size={16} className="text-navy/60 dark:text-white/60" />
             </button>

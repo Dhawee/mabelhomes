@@ -10,6 +10,8 @@ import FadeIn from "@/components/ui/FadeIn";
 import type { Metadata } from "next";
 import { API_BASE_URL } from "@/config";
 import { Property } from "@/types";
+import BackButton from "@/components/properties/BackButton";
+import SafeImage from "@/components/ui/SafeImage";
 
 const WhatsAppIcon = ({ className }: { className?: string }) => (
   <svg
@@ -88,15 +90,10 @@ export default async function PropertyDetailPage({ params }: Props) {
   const related = await getSimilarProperties(slug);
 
   return (
-    <div className="pt-24 pb-20">
+    <div className="pt-32 pb-20">
       <div className="max-w-7xl mx-auto px-6 md:px-12">
         <div className="mb-6">
-          <Link
-            href="/properties"
-            className="inline-flex items-center gap-2 text-sm font-medium text-navy/60 dark:text-white/60 hover:text-gold transition-colors"
-          >
-            <ArrowLeft size={16} /> Back to Properties
-          </Link>
+          <BackButton />
         </div>
         <FadeIn>
           <PropertyGallery
@@ -104,6 +101,7 @@ export default async function PropertyDetailPage({ params }: Props) {
             imagesDetails={property.images_details}
             videos={property.videos ?? []}
             title={property.title}
+            propertySlug={property.slug}
           />
         </FadeIn>
 
@@ -316,13 +314,14 @@ export default async function PropertyDetailPage({ params }: Props) {
                 <Link key={p.id} href={`/properties/${p.slug}`} className="luxury-card group overflow-hidden hover:shadow-luxury-lg">
                   <div className="relative aspect-[4/3] overflow-hidden">
                     {p.primary_image || (p.images && p.images.length > 0) ? (
-                      <Image
+                      <SafeImage
                         src={p.primary_image || p.images[0]}
                         alt={p.title}
                         fill
                         className="object-cover group-hover:scale-110 transition-transform duration-700"
                         sizes="33vw"
-                        unoptimized
+                        propertySlug={p.slug}
+                        imageId="primary_similar"
                       />
                     ) : (
                       <div className="w-full h-full bg-navy/10 flex items-center justify-center">

@@ -54,6 +54,7 @@ export async function verifySession(): Promise<AuthUser | null> {
     await api.post("/api/auth/token/verify/", { token }, { skipAuth: true });
     return decodeJwtPayload(token);
   } catch {
+    clearTokens();
     return null;
   }
 }

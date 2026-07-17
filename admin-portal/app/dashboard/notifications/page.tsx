@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { Bell, Check, CheckCheck, Trash2, RefreshCw } from "lucide-react";
 import { api } from "@/lib/api";
 import type { AdminNotification, PaginatedResponse } from "@/types";
@@ -27,6 +28,11 @@ export default function NotificationsPage() {
   const [showUnread, setShowUnread] = useState(false);
   const [page, setPage] = useState(1);
   const [selectedNotification, setSelectedNotification] = useState<AdminNotification | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -156,14 +162,13 @@ export default function NotificationsPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="font-semibold text-gray-900 text-sm">{notif.title}</p>
-                  {!notif.read && (
-                    <span className="badge badge-info text-[10px]">New</span>
-                  )}
+                  <span className={`badge text-[10px] ${!notif.read ? "badge-info" : "badge-gray"}`}>
+                    {!notif.read ? "Unread" : "Read"}
+                  </span>
                   <span className="badge badge-gray text-[10px]">
                     {TYPE_LABELS[notif.notification_type] || notif.notification_type}
                   </span>
                 </div>
-                <p className="text-sm text-gray-600 mt-0.5 truncate">{notif.message}</p>
                 <p className="text-xs text-gray-400 mt-1">
                   {new Date(notif.created_at).toLocaleString()}
                 </p>
@@ -213,10 +218,10 @@ export default function NotificationsPage() {
         </div>
       )}
 
-      {/* Notification Details Modal */}
-      {selectedNotification && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      {/* Notification Details Modal (Mounted in Portal to bypass container transformations) */}
+      {mounted && selectedNotification && createPortal(
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={() => setSelectedNotification(null)}>
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
               <div className="flex items-center gap-2">
                 <span className="text-xl">{TYPE_ICONS[selectedNotification.notification_type] || "🔔"}</span>
@@ -224,7 +229,7 @@ export default function NotificationsPage() {
               </div>
               <button
                 onClick={() => setSelectedNotification(null)}
-                className="text-gray-400 hover:text-gray-600 font-bold p-1 text-lg"
+                className="text-gray-400 hover:text-gray-600 font-bold p-1 text-lg border-none bg-transparent cursor-pointer"
               >
                 ✕
               </button>
@@ -241,13 +246,14 @@ export default function NotificationsPage() {
               <span>Timestamp: {new Date(selectedNotification.created_at).toLocaleString()}</span>
               <button
                 onClick={() => setSelectedNotification(null)}
-                className="btn btn-primary py-1.5 px-4 text-xs text-white"
+                className="btn btn-primary py-1.5 px-4 text-xs text-white border-none cursor-pointer"
               >
                 Close
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

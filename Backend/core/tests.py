@@ -113,6 +113,50 @@ class PropertyServiceTests(TestCase):
         self.assertTrue(result["liked"])
         self.assertEqual(result["likes_count"], 1)
 
+    def test_multiple_likes_same_ip_different_sessions(self):
+        """
+        Tests that multiple visitors sharing the same NAT/proxy IP address (e.g. 127.0.0.1)
+        but having different session_keys (Visitor IDs) can like the property independently.
+        """
+        # User 1 likes property from 127.0.0.1
+        res1 = toggle_like_property(
+            self.prop_a.id, session_key="visitor_uuid_1", ip_address="127.0.0.1"
+        )
+        self.assertTrue(res1["liked"])
+        self.assertEqual(res1["likes_count"], 1)
+
+        # User 2 likes same property from 127.0.0.1
+        res2 = toggle_like_property(
+            self.prop_a.id, session_key="visitor_uuid_2", ip_address="127.0.0.1"
+        )
+        self.assertTrue(res2["liked"])
+        self.assertEqual(res2["likes_count"], 2)
+
+        # Verify both like records exist in the DB
+        from core.models import PropertyLike
+        self.assertEqual(PropertyLike.objects.filter(property=self.prop_a).count(), 2)
+
+    def test_likes_count_sync_via_signals(self):
+        """
+        Tests that database signals keep Property.likes_count in sync when
+        PropertyLike objects are saved or deleted directly (outside service layer).
+        """
+        from core.models import PropertyLike
+        # Create directly in database
+        PropertyLike.objects.create(property=self.prop_a, session_key="direct_visitor_1")
+        self.prop_a.refresh_from_db()
+        self.assertEqual(self.prop_a.likes_count, 1)
+
+        # Create another directly
+        like2 = PropertyLike.objects.create(property=self.prop_a, session_key="direct_visitor_2")
+        self.prop_a.refresh_from_db()
+        self.assertEqual(self.prop_a.likes_count, 2)
+
+        # Delete one directly
+        like2.delete()
+        self.prop_a.refresh_from_db()
+        self.assertEqual(self.prop_a.likes_count, 1)
+
 
 class EnquiryServiceTests(TestCase):
     def setUp(self):

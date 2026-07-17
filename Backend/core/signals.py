@@ -6,7 +6,7 @@ from django.db.models.signals import pre_save, post_save, post_delete
 from django.dispatch import receiver
 
 from core.models import (AdminNotification, ContactMessage, PropertyEnquiry,
-                         ServiceEnquiry, Property, UserProfile, PropertyImage, PropertyVideo)
+                         ServiceEnquiry, Property, UserProfile, PropertyImage, PropertyVideo, PropertyLike)
 from core.services.notification_service import notify_admin
 from core.services.audit_service import log_action
 
@@ -205,4 +205,61 @@ def handle_property_video_pre_save(sender, instance, **kwargs):
     """Ensures only one video is marked as primary for a property."""
     if instance.is_primary:
         PropertyVideo.objects.filter(property=instance.property).exclude(id=instance.id).update(is_primary=False)
+
+
+# ---------------------------------------------------------------------------
+# Property Likes Sync Signals
+# ---------------------------------------------------------------------------
+
+@receiver(post_save, sender=PropertyLike)
+def handle_property_like_saved(sender, instance, created, **kwargs):
+    """Recalculates property likes_count on new likes to prevent DB drift."""
+    if created:
+        prop = instance.property
+        prop.likes_count = PropertyLike.objects.filter(property=prop).count()
+        prop.save(update_fields=["likes_count"])
+
+
+@receiver(post_delete, sender=PropertyLike)
+def handle_property_like_deleted(sender, instance, **kwargs):
+    """Recalculates property likes_count when a like is removed to prevent DB drift."""
+    prop = instance.property
+    prop.likes_count = PropertyLike.objects.filter(property=prop).count()
+    prop.save(update_fields=["likes_count"])
+
+
+# ---------------------------------------------------------------------------
+# File Deletion Signals (Supabase Storage Cleanup)
+# ---------------------------------------------------------------------------
+
+@receiver(post_delete, sender=PropertyImage)
+def handle_property_image_deleted(sender, instance, **kwargs):
+    """Deletes uploaded media files from Supabase/local storage when DB record is deleted."""
+    if instance.image_upload:
+        try:
+            instance.image_upload.delete(save=False)
+        except Exception as e:
+            logger.warning(f"Failed to delete original image file from storage: {e}")
+            
+    if instance.image_optimized:
+        try:
+            instance.image_optimized.delete(save=False)
+        except Exception as e:
+            logger.warning(f"Failed to delete optimized image file from storage: {e}")
+            
+    if instance.image_thumbnail:
+        try:
+            instance.image_thumbnail.delete(save=False)
+        except Exception as e:
+            logger.warning(f"Failed to delete thumbnail image file from storage: {e}")
+
+
+@receiver(post_delete, sender=PropertyVideo)
+def handle_property_video_deleted(sender, instance, **kwargs):
+    """Deletes uploaded video file from Supabase/local storage when DB record is deleted."""
+    if instance.video_upload:
+        try:
+            instance.video_upload.delete(save=False)
+        except Exception as e:
+            logger.warning(f"Failed to delete video file from storage: {e}")
 

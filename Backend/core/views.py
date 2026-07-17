@@ -24,10 +24,10 @@ from core.serializers import (AdminNotificationSerializer,
                               AuditLogSerializer, ContactMessageSerializer,
                               DashboardStatsSerializer, EnquiryReplySerializer,
                               MediaAssetSerializer, PropertyEnquirySerializer,
-                              PropertySerializer, PropertyTypeSerializer,
-                              PropertyVideoSerializer, ServiceEnquirySerializer,
-                              ServiceTypeSerializer, UserSerializer,
-                              GroupSerializer, PermissionSerializer,
+                              PropertySerializer, PropertyListSerializer,
+                              PropertyTypeSerializer, PropertyVideoSerializer,
+                              ServiceEnquirySerializer, ServiceTypeSerializer,
+                              UserSerializer, GroupSerializer, PermissionSerializer,
                               PropertyImageSerializer)
 from core.services.enquiry_service import (create_contact_message,
                                            create_property_enquiry,
@@ -72,6 +72,11 @@ class PropertyViewSet(viewsets.ModelViewSet):
     serializer_class = PropertySerializer
     permission_classes = [DjangoModelPermissionsOrStaffExplicit]
     lookup_field = "slug"
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return PropertyListSerializer
+        return PropertySerializer
 
     def get_queryset(self):
         # Read query parameters
@@ -320,9 +325,13 @@ class PropertyViewSet(viewsets.ModelViewSet):
     )
     def like(self, request, slug=None):
         obj = self.get_object()
-        if not request.session.session_key:
-            request.session.create()
-        session_key = request.session.session_key
+        
+        # Check X-Visitor-ID header first, then body parameter (for maximum client compatibility)
+        session_key = request.headers.get("X-Visitor-ID") or request.data.get("visitor_id")
+        if not session_key:
+            if not request.session.session_key:
+                request.session.create()
+            session_key = request.session.session_key
 
         x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
         if x_forwarded_for:
@@ -341,9 +350,13 @@ class PropertyViewSet(viewsets.ModelViewSet):
     )
     def like_status(self, request, slug=None):
         obj = self.get_object()
-        if not request.session.session_key:
-            request.session.create()
-        session_key = request.session.session_key
+        
+        # Check X-Visitor-ID header first, then query parameter (for maximum client compatibility)
+        session_key = request.headers.get("X-Visitor-ID") or request.query_params.get("visitor_id")
+        if not session_key:
+            if not request.session.session_key:
+                request.session.create()
+            session_key = request.session.session_key
 
         x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
         ip = (
@@ -361,6 +374,42 @@ class PropertyViewSet(viewsets.ModelViewSet):
         similar_props = get_similar_properties(obj, limit=3)
         serializer = self.get_serializer(similar_props, many=True)
         return Response(serializer.data)
+
+    @action(detail=True, methods=["post"], permission_classes=[permissions.AllowAny])
+    def log_missing_image(self, request, slug=None):
+        obj = self.get_object()
+        image_url = request.data.get("image_url", "Unknown URL")
+        image_id = request.data.get("image_id", "Unknown ID")
+
+        title = f"Missing Property Image on: {obj.title}"
+        message = (
+            f"A visitor's browser reported a missing image file for property:\n"
+            f"Property: {obj.title} (Slug: {obj.slug})\n"
+            f"Image ID: {image_id}\n"
+            f"Image URL: {image_url}\n\n"
+            f"Please verify this file in Supabase Storage and re-upload if needed."
+        )
+
+        # Check if an active unread notification already exists for this property and image_id to prevent duplicates
+        exists = AdminNotification.objects.filter(
+            notification_type=AdminNotification.NOTIFICATION_SYSTEM,
+            title=title,
+            read=False,
+            message__contains=f"Image ID: {image_id}"
+        ).exists()
+
+        if not exists:
+            from core.services.notification_service import notify_admin
+            notify_admin(
+                title=title,
+                message=message,
+                notification_type=AdminNotification.NOTIFICATION_SYSTEM,
+            )
+            logger.warning(f"Reported missing image for property '{obj.title}': ID={image_id}, URL={image_url}")
+        else:
+            logger.info(f"Duplicate missing image report skipped for property '{obj.title}', ID={image_id}")
+
+        return Response({"status": "logged"}, status=status.HTTP_200_OK)
 
     @action(
         detail=True,

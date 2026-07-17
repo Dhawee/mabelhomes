@@ -402,16 +402,11 @@ class PropertyLike(models.Model):
 
     class Meta:
         constraints = [
-            # Prevent spam likes from the same session or IP address on a property
+            # Prevent spam likes from the same session/visitor on a property
             models.UniqueConstraint(
                 fields=["property", "session_key"],
                 name="unique_property_session_like",
                 condition=models.Q(session_key__isnull=False),
-            ),
-            models.UniqueConstraint(
-                fields=["property", "ip_address"],
-                name="unique_property_ip_like",
-                condition=models.Q(ip_address__isnull=False),
             ),
         ]
 

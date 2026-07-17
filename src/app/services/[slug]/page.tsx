@@ -9,11 +9,11 @@ import {
   Search,
   Building2,
   Check,
-  ArrowLeft,
   Calendar,
 } from "lucide-react";
 import { SITE } from "@/data/site";
 import FadeIn from "@/components/ui/FadeIn";
+import BackButton from "@/components/properties/BackButton";
 import type { Metadata } from "next";
 import { API_BASE_URL } from "@/config";
 import { Service } from "@/types";
@@ -87,12 +87,7 @@ export default async function ServiceDetailPage({ params }: Props) {
       <div className="max-w-4xl mx-auto px-6 md:px-12">
         {/* Back Button */}
         <FadeIn className="mb-8">
-          <Link
-            href="/services"
-            className="inline-flex items-center gap-2 text-sm font-medium text-navy/60 dark:text-white/60 hover:text-gold transition-colors"
-          >
-            <ArrowLeft size={16} /> Back to Services
-          </Link>
+          <BackButton fallback="/services" />
         </FadeIn>
 
         {/* Hero Details */}

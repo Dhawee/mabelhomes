@@ -10,11 +10,12 @@ import { motion } from "framer-motion";
 
 import { Property } from "@/types";
 import { API_BASE_URL } from "@/config";
+import SafeImage from "@/components/ui/SafeImage";
+import PropertyLikeButton from "../properties/PropertyLikeButton";
 
 export default function FeaturedProperties() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
-  const [favorites, setFavorites] = useState<(string | number)[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [visibleItems, setVisibleItems] = useState(3);
 
@@ -47,11 +48,7 @@ export default function FeaturedProperties() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const toggleFavorite = (id: string | number) => {
-    setFavorites((prev) =>
-      prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
-    );
-  };
+
 
   const maxIndex = Math.max(0, properties.length - visibleItems);
 
@@ -131,13 +128,14 @@ export default function FeaturedProperties() {
                 <div className="luxury-card group hover:shadow-luxury-lg h-full flex flex-col justify-between bg-white dark:bg-navy/40">
                   <div className="relative aspect-[4/3] overflow-hidden">
                     {property.images && property.images.length > 0 ? (
-                      <Image
+                      <SafeImage
                         src={property.primary_image || property.images[0]}
                         alt={property.title}
                         fill
                         className="object-cover group-hover:scale-110 transition-transform duration-700"
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        unoptimized
+                        propertySlug={property.slug}
+                        imageId="primary_featured"
                       />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-navy/10 to-gold/10 flex items-center justify-center">
@@ -154,20 +152,11 @@ export default function FeaturedProperties() {
                         </span>
                       )}
                     </div>
-                    <button
-                      onClick={() => toggleFavorite(property.id)}
-                      className="absolute top-4 right-4 w-9 h-9 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-colors cursor-pointer"
-                      aria-label="Save to favorites"
-                    >
-                      <Heart
-                        size={16}
-                        className={
-                          favorites.includes(property.id)
-                            ? "fill-gold text-gold"
-                            : "text-navy/60"
-                        }
-                      />
-                    </button>
+                    <PropertyLikeButton
+                      property={property}
+                      variant="image-badge"
+                      iconSize={16}
+                    />
                   </div>
 
                   <div className="p-6 flex-1 flex flex-col justify-between bg-white dark:bg-navy/40">

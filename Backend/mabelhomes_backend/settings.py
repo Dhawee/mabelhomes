@@ -70,14 +70,21 @@ TEMPLATES = [
 WSGI_APPLICATION = "mabelhomes_backend.wsgi.application"
 ASGI_APPLICATION = "mabelhomes_backend.asgi.application"
 
+# Helper to read environment variables and strip whitespaces safely
+def get_env_stripped(key, default=""):
+    val = os.getenv(key, default)
+    if val is None:
+        return None
+    return val.strip()
+
 # Database configuration
 # Connects to PostgreSQL via DATABASE_URL or separate credentials if available, falls back to SQLite
-DATABASE_URL = os.getenv("DATABASE_URL")
-DB_NAME = os.getenv("DB_NAME")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_HOST = os.getenv("DB_HOST")
-DB_PORT = os.getenv("DB_PORT", "5432")
+DATABASE_URL = get_env_stripped("DATABASE_URL")
+DB_NAME = get_env_stripped("DB_NAME")
+DB_USER = get_env_stripped("DB_USER")
+DB_PASSWORD = get_env_stripped("DB_PASSWORD")
+DB_HOST = get_env_stripped("DB_HOST")
+DB_PORT = get_env_stripped("DB_PORT", "5432")
 
 if DATABASE_URL:
     DATABASES = {
@@ -85,6 +92,7 @@ if DATABASE_URL:
             default=DATABASE_URL,
             conn_max_age=600,
             conn_health_checks=True,
+            disable_server_side_cursors=True,
         )
     }
 elif DB_NAME and DB_USER and DB_PASSWORD and DB_HOST:
@@ -97,6 +105,7 @@ elif DB_NAME and DB_USER and DB_PASSWORD and DB_HOST:
             "HOST": DB_HOST,
             "PORT": DB_PORT,
             "CONN_MAX_AGE": 600,
+            "DISABLE_SERVER_SIDE_CURSORS": True,
         }
     }
 else:
@@ -140,16 +149,48 @@ STATICFILES_DIRS = [
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
+# Supabase Storage Configuration
+USE_SUPABASE_STORAGE = get_env_stripped("USE_SUPABASE_STORAGE", "False").lower() in ("true", "1", "yes")
+SUPABASE_URL = get_env_stripped("SUPABASE_URL", "")
+SUPABASE_KEY = get_env_stripped("SUPABASE_KEY", "")
+SUPABASE_BUCKET = get_env_stripped("SUPABASE_BUCKET", "property-media")
+
+if USE_SUPABASE_STORAGE:
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        raise ValueError(
+            "USE_SUPABASE_STORAGE is set to True, but SUPABASE_URL or SUPABASE_KEY is missing/empty. "
+            "Please configure all Supabase Storage environment variables to prevent silent fallback to local storage."
+        )
+    STORAGES = {
+        "default": {
+            "BACKEND": "core.storage.SupabaseStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # CORS & CSRF Configurations
+from corsheaders.defaults import default_headers
+
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
+]
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://.*\.onrender\.com$",
     r"^http://localhost:\d+$",
     r"^http://127\.0\.0\.1:\d+$",
+]
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    "x-visitor-id",
 ]
 CSRF_TRUSTED_ORIGINS = os.getenv(
     "CSRF_TRUSTED_ORIGINS",
@@ -164,7 +205,7 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.BasicAuthentication",
     ],
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "DEFAULT_PAGINATION_CLASS": "core.pagination.StandardResultsSetPagination",
     "PAGE_SIZE": 10,
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
@@ -227,19 +268,19 @@ MABEL_CACHE_TTL = int(os.getenv("CACHE_TTL", "3600"))
 # ---------------------------------------------------------------------------
 # Email / SMTP Configuration
 # ---------------------------------------------------------------------------
-_email_host_user = os.getenv("EMAIL_HOST_USER", "")
-_email_host_password = os.getenv("EMAIL_HOST_PASSWORD", "")
+_email_host_user = get_env_stripped("EMAIL_HOST_USER", "")
+_email_host_password = get_env_stripped("EMAIL_HOST_PASSWORD", "")
 
-EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
-EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
-EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
-EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() in ("true", "1", "yes")
-EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False").lower() in ("true", "1", "yes")
+EMAIL_BACKEND = get_env_stripped("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
+EMAIL_HOST = get_env_stripped("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(get_env_stripped("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = get_env_stripped("EMAIL_USE_TLS", "True").lower() in ("true", "1", "yes")
+EMAIL_USE_SSL = get_env_stripped("EMAIL_USE_SSL", "False").lower() in ("true", "1", "yes")
 EMAIL_HOST_USER = _email_host_user
 EMAIL_HOST_PASSWORD = _email_host_password
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "olajumoke@mabelhomes.org")
-SERVER_EMAIL = os.getenv("SERVER_EMAIL", "olajumoke@mabelhomes.org")
-ADMIN_EMAIL_FROM = os.getenv("ADMIN_EMAIL_FROM", "olajumoke@mabelhomes.org")
+DEFAULT_FROM_EMAIL = get_env_stripped("DEFAULT_FROM_EMAIL", "olajumoke@mabelhomes.org")
+SERVER_EMAIL = get_env_stripped("SERVER_EMAIL", "olajumoke@mabelhomes.org")
+ADMIN_EMAIL_FROM = get_env_stripped("ADMIN_EMAIL_FROM", "olajumoke@mabelhomes.org")
 
 # If SMTP details are empty in local development, fallback to console email backend
 if not _email_host_user or not _email_host_password:
@@ -263,7 +304,7 @@ EMAIL_BACKEND_IS_CONSOLE = EMAIL_BACKEND == "django.core.mail.backends.console.E
 EMAIL_BACKEND_REASON = _EMAIL_BACKEND_REASON
 
 # Custom Mabel Homes Settings
-ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "olajumoke@mabelhomes.org")
+ADMIN_EMAIL = get_env_stripped("ADMIN_EMAIL", "olajumoke@mabelhomes.org")
 
 # Image Processing Configuration
 MABEL_MAX_UPLOAD_SIZE = int(os.getenv("MAX_UPLOAD_SIZE", str(5 * 1024 * 1024)))  # 5MB

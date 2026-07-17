@@ -42,3 +42,13 @@ next-env.d.ts
 /Backend/media/
 /Backend/static/
 /Backend/.ruff_cache/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+env.bak/
+venv.bak/

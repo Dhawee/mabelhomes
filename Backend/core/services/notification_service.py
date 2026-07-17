@@ -28,7 +28,7 @@ def notify_admin(title: str, message: str, notification_type: str = "system") ->
     notifications to all active staff/administrator accounts dynamically.
 
     Always writes the DB notification first (so it's never lost),
-    then attempts email delivery and logs the outcome.
+    then attempts email delivery asynchronously and logs the outcome.
 
     Args:
         title: Short notification title.
@@ -61,7 +61,7 @@ def notify_admin(title: str, message: str, notification_type: str = "system") ->
     if not recipient_emails:
         recipient_emails = [settings.ADMIN_EMAIL]
 
-    # 3. Attempt email delivery to all resolved admins
+    # 3. Attempt email delivery to all resolved admins asynchronously in a separate thread
     backend_info = _get_email_backend_info()
     is_console = getattr(settings, "EMAIL_BACKEND_IS_CONSOLE", False)
 
@@ -71,25 +71,32 @@ def notify_admin(title: str, message: str, notification_type: str = "system") ->
             f"The following notification will be printed to the console instead of delivered."
         )
 
-    try:
-        send_mail(
-            subject=f"[Mabel Homes Admin] {title}",
-            message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=recipient_emails,
-            fail_silently=False,
-        )
-        if is_console:
-            logger.info(f"Admin notification printed to console for: {recipient_emails}: {title!r}")
-        else:
-            logger.info(
-                f"Admin email alert sent successfully to {recipient_emails} via {backend_info}"
+    import threading
+
+    def _send():
+        try:
+            send_mail(
+                subject=f"[Mabel Homes Admin] {title}",
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=recipient_emails,
+                fail_silently=False,
             )
-    except Exception as exc:
-        logger.error(
-            f"Failed to send admin email notification via {backend_info}: {exc}",
-            exc_info=True,
-        )
+            if is_console:
+                logger.info(f"Admin notification printed to console for: {recipient_emails}: {title!r}")
+            else:
+                logger.info(
+                    f"Admin email alert sent successfully to {recipient_emails} via {backend_info}"
+                )
+        except Exception as exc:
+            logger.error(
+                f"Failed to send admin email notification via {backend_info}: {exc}",
+                exc_info=True,
+            )
+
+    thread = threading.Thread(target=_send)
+    thread.daemon = True
+    thread.start()
 
 
 def send_html_email(

@@ -78,10 +78,12 @@ def get_similar_properties(property_instance, limit=3):
     return [item[1] for item in scored_candidates[:limit]]
 
 
-def get_like_status(property_id: int, session_key: str | None, ip_address: str | None) -> dict:
+def get_like_status(property_id: int, session_key: str | None, ip_address: str | None = None) -> dict:
     """
     Returns whether the current visitor has liked a property.
-    Checks by session_key OR ip_address.
+    Checks by session_key (which stores the persistent visitor UUID).
+    Does NOT check by ip_address to avoid multi-user conflicts on the same network.
+    Automatically keeps likes_count in sync on read.
 
     Returns:
         {
@@ -94,34 +96,34 @@ def get_like_status(property_id: int, session_key: str | None, ip_address: str |
     except Property.DoesNotExist:
         return {"liked": False, "likes_count": 0}
 
-    if not session_key and not ip_address:
-        return {"liked": False, "likes_count": prop.likes_count}
+    # Ensure count is accurate by reading actual DB records
+    actual_count = PropertyLike.objects.filter(property=prop).count()
+    if prop.likes_count != actual_count:
+        prop.likes_count = actual_count
+        prop.save(update_fields=["likes_count"])
 
-    check_query = Q()
-    if session_key:
-        check_query |= Q(session_key=session_key)
-    if ip_address:
-        check_query |= Q(ip_address=ip_address)
+    if not session_key:
+        return {"liked": False, "likes_count": actual_count}
 
-    liked = PropertyLike.objects.filter(property=prop).filter(check_query).exists()
+    liked = PropertyLike.objects.filter(property=prop, session_key=session_key).exists()
 
     return {
         "liked": liked,
-        "likes_count": prop.likes_count,
+        "likes_count": actual_count,
     }
 
 
 def toggle_like_property(
-    property_id: int, session_key: str | None, ip_address: str | None
+    property_id: int, session_key: str | None, ip_address: str | None = None
 ) -> dict:
     """
-    Toggles the like state for a property from a specific visitor.
+    Toggles the like state for a property from a specific visitor identified by session_key (Visitor UUID).
 
     - If the visitor has NOT liked: creates a like and increments counter.
     - If the visitor HAS liked: removes the like and decrements counter.
 
-    Identifies visitors by session_key OR ip_address.
-    Uses a single atomic transaction to prevent race conditions.
+    Uses a single atomic transaction and selects for update to prevent race conditions.
+    Always uses DB counts to update the denormalized likes_count.
 
     Returns:
         {
@@ -137,59 +139,57 @@ def toggle_like_property(
     except Property.DoesNotExist:
         return {"liked": False, "likes_count": 0, "message": "Property not found."}
 
-    if not session_key and not ip_address:
+    if not session_key:
         return {
             "liked": False,
             "likes_count": prop.likes_count,
-            "message": "Session key or IP address is required.",
+            "message": "Visitor ID is required.",
         }
 
-    # Build query to find existing like from this visitor
-    check_query = Q()
-    if session_key:
-        check_query |= Q(session_key=session_key)
-    if ip_address:
-        check_query |= Q(ip_address=ip_address)
-
     with transaction.atomic():
+        # Query only by visitor session_key (UUID) to prevent NAT/office IP conflicts
         existing_like = (
-            PropertyLike.objects.filter(property=prop).filter(check_query).first()
+            PropertyLike.objects.filter(property=prop, session_key=session_key).first()
         )
 
         if existing_like:
             # Toggle OFF — remove the like
             existing_like.delete()
-            new_count = max(prop.likes_count - 1, 0)
-            prop.likes_count = new_count
+            actual_count = PropertyLike.objects.filter(property=prop).count()
+            prop.likes_count = actual_count
             prop.save(update_fields=["likes_count"])
 
             logger.debug(
-                f"Property {property_id} unliked by session={session_key} ip={ip_address}. "
-                f"New count: {new_count}"
+                f"Property {property_id} unliked by visitor={session_key}. "
+                f"New count: {actual_count}"
             )
             return {
                 "liked": False,
-                "likes_count": new_count,
+                "likes_count": actual_count,
                 "message": "Like removed.",
             }
         else:
             # Toggle ON — create a like
-            PropertyLike.objects.create(
-                property=prop,
-                session_key=session_key,
-                ip_address=ip_address,
-            )
-            new_count = prop.likes_count + 1
-            prop.likes_count = new_count
+            try:
+                PropertyLike.objects.create(
+                    property=prop,
+                    session_key=session_key,
+                    ip_address=ip_address,
+                )
+            except Exception as e:
+                logger.warning(f"Failed to create PropertyLike for visitor={session_key}: {e}")
+                
+            actual_count = PropertyLike.objects.filter(property=prop).count()
+            prop.likes_count = actual_count
             prop.save(update_fields=["likes_count"])
 
             logger.debug(
-                f"Property {property_id} liked by session={session_key} ip={ip_address}. "
-                f"New count: {new_count}"
+                f"Property {property_id} liked by visitor={session_key}. "
+                f"New count: {actual_count}"
             )
             return {
                 "liked": True,
-                "likes_count": new_count,
+                "likes_count": actual_count,
                 "message": "Liked successfully.",
             }
 

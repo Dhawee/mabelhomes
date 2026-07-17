@@ -129,7 +129,7 @@ class PropertySerializer(serializers.ModelSerializer):
     type = serializers.CharField(source="property_type.name", read_only=True)
     type_slug = serializers.CharField(source="property_type.slug", read_only=True)
     images = serializers.SerializerMethodField()
-    images_details = PropertyImageSerializer(source="images", many=True, read_only=True)
+    images_details = serializers.SerializerMethodField()
     videos = serializers.SerializerMethodField()
     coordinates = serializers.SerializerMethodField()
     primary_image = serializers.SerializerMethodField()
@@ -185,20 +185,22 @@ class PropertySerializer(serializers.ModelSerializer):
     def get_primary_image(self, obj):
         """Returns the primary image URL for card/thumbnail display."""
         request = self.context.get("request")
-        primary = obj.images.filter(is_primary=True).first() or obj.images.first()
-        if primary:
-            if primary.image_optimized:
-                return _build_url(request, primary.image_optimized.url)
-            elif primary.image_upload:
-                return _build_url(request, primary.image_upload.url)
-            else:
-                return primary.image_url
-        return None
+        images = list(obj.images.all())
+        if not images:
+            return None
+        primary = next((img for img in images if img.is_primary), None) or images[0]
+        if primary.image_optimized:
+            return _build_url(request, primary.image_optimized.url)
+        elif primary.image_upload:
+            return _build_url(request, primary.image_upload.url)
+        else:
+            return primary.image_url
 
     def get_images(self, obj):
         """Returns all image URLs in order (primary first)."""
         request = self.context.get("request")
-        images = obj.images.all().order_by("-is_primary", "order", "created_at")
+        images = list(obj.images.all())
+        images.sort(key=lambda x: (not x.is_primary, x.order or 0, getattr(x, "created_at", None) or x.id or 0))
         urls = []
         for img in images:
             if img.image_optimized:
@@ -211,16 +213,70 @@ class PropertySerializer(serializers.ModelSerializer):
                 urls.append(url)
         return urls
 
+    def get_images_details(self, obj):
+        """Returns detailed serializer representations of sorted images."""
+        request = self.context.get("request")
+        images = list(obj.images.all())
+        images.sort(key=lambda x: (not x.is_primary, x.order or 0, getattr(x, "created_at", None) or x.id or 0))
+        return PropertyImageSerializer(
+            images, many=True, context={"request": request}
+        ).data
+
     def get_videos(self, obj):
         """Returns all videos for this property ordered by display order."""
         request = self.context.get("request")
-        videos = obj.videos.all().order_by("order", "created_at")
+        videos = list(obj.videos.all())
+        videos.sort(key=lambda x: (x.order or 0, getattr(x, "created_at", None) or x.id or 0))
         return PropertyVideoSerializer(
             videos, many=True, context={"request": request}
         ).data
 
     def get_coordinates(self, obj):
         return {"lat": float(obj.latitude), "lng": float(obj.longitude)}
+
+
+class PropertyListSerializer(serializers.ModelSerializer):
+    """
+    Lightweight serializer for listing properties efficiently without loading 
+    heavy relationships (images_details, videos) or large text fields (description).
+    """
+    type = serializers.CharField(source="property_type.name", read_only=True)
+    primary_image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Property
+        fields = [
+            "id",
+            "slug",
+            "title",
+            "price",
+            "bedrooms",
+            "bathrooms",
+            "sqft",
+            "status",
+            "type",
+            "city",
+            "location",
+            "featured",
+            "luxury",
+            "primary_image",
+            "likes_count",
+            "created_at",
+        ]
+
+    def get_primary_image(self, obj):
+        """Returns only the primary image URL."""
+        request = self.context.get("request")
+        images = list(obj.images.all())
+        if not images:
+            return None
+        primary = next((img for img in images if img.is_primary), None) or images[0]
+        if primary.image_optimized:
+            return _build_url(request, primary.image_optimized.url)
+        elif primary.image_upload:
+            return _build_url(request, primary.image_upload.url)
+        else:
+            return primary.image_url
 
 
 # ---------------------------------------------------------------------------

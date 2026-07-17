@@ -5,10 +5,11 @@ import Image from "next/image";
 import { ChevronLeft, ChevronRight, X, Play, Image as ImageIcon } from "lucide-react";
 import { PropertyVideo } from "@/types";
 import PropertyVideoPlayer from "./PropertyVideoPlayer";
+import SafeImage from "@/components/ui/SafeImage";
 
 // Unified gallery item: can be an image URL or a video object
 type GalleryItem =
-  | { kind: "image"; url: string; order: number }
+  | { kind: "image"; url: string; order: number; id?: number | string }
   | { kind: "video"; video: PropertyVideo; order: number };
 
 function getVideoThumbnail(video: PropertyVideo): string | null {
@@ -27,6 +28,7 @@ interface PropertyGalleryProps {
   imagesDetails?: any[];
   videos?: PropertyVideo[];
   title: string;
+  propertySlug?: string;
 }
 
 export default function PropertyGallery({
@@ -34,6 +36,7 @@ export default function PropertyGallery({
   imagesDetails = [],
   videos = [],
   title,
+  propertySlug,
 }: PropertyGalleryProps) {
   // Build unified, ordered gallery items
   const items: GalleryItem[] = [];
@@ -46,6 +49,7 @@ export default function PropertyGallery({
           kind: "image" as const,
           url,
           order: img.order,
+          id: img.id,
         });
       }
     });
@@ -55,6 +59,7 @@ export default function PropertyGallery({
         kind: "image" as const,
         url,
         order: i,
+        id: undefined,
       });
     });
   }
@@ -121,7 +126,7 @@ export default function PropertyGallery({
       {/* Main Display */}
       <div className="relative aspect-[16/9] rounded-2xl overflow-hidden group bg-black">
         {currentItem.kind === "image" ? (
-          <Image
+          <SafeImage
             src={currentItem.url}
             alt={`${title} — ${current + 1} of ${totalItems}`}
             fill
@@ -129,7 +134,8 @@ export default function PropertyGallery({
             sizes="100vw"
             priority={current === 0}
             onClick={() => setLightbox(true)}
-            unoptimized
+            propertySlug={propertySlug}
+            imageId={currentItem.id}
           />
         ) : (
           <div className="w-full h-full">
@@ -206,13 +212,14 @@ export default function PropertyGallery({
               aria-label={`View item ${i + 1}`}
             >
               {item.kind === "image" ? (
-                <Image
+                <SafeImage
                   src={item.url}
                   alt=""
                   fill
                   className="object-cover"
                   sizes="150px"
-                  unoptimized
+                  propertySlug={propertySlug}
+                  imageId={item.id}
                 />
               ) : (
                 <div className="relative w-full h-full bg-navy/80 flex flex-col items-center justify-center">
@@ -265,14 +272,15 @@ export default function PropertyGallery({
             <ChevronLeft size={40} />
           </button>
           <div className="relative w-full max-w-5xl aspect-[16/9] mx-20">
-            <Image
+            <SafeImage
               src={currentItem.url}
               alt={`${title} — ${current + 1}`}
               fill
               className="object-contain"
               sizes="90vw"
               priority
-              unoptimized
+              propertySlug={propertySlug}
+              imageId={currentItem.id}
             />
           </div>
           <button
