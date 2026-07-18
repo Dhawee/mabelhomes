@@ -350,6 +350,26 @@ class PropertyVideoTests(TestCase):
             mock_delete.assert_called_once()
 
 
+class MediaAssetTests(TestCase):
+    def test_media_asset_deletion_removes_file(self):
+        from unittest.mock import patch
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from core.models import MediaAsset
+
+        asset_file = SimpleUploadedFile("test_asset.png", b"dummy image content", content_type="image/png")
+        asset = MediaAsset.objects.create(
+            file=asset_file,
+            file_name="test_asset.png",
+            media_type="image",
+        )
+        self.assertTrue(asset.file.name.endswith(".png"))
+
+        # Verify that deleting the object calls storage delete
+        with patch("django.core.files.storage.default_storage.delete") as mock_delete:
+            asset.delete()
+            mock_delete.assert_called_once()
+
+
 class APITests(APITestCase):
     def setUp(self):
         self.type_house = PropertyType.objects.create(name="House")

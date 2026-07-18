@@ -65,7 +65,7 @@ export default function FloatingActions() {
 
         {/* Email us */}
         <a
-          href="mailto:info@mabelhomes.com"
+          href="mailto:olajumoke@mabelhomes.org"
           className="flex items-center gap-3 group cursor-pointer"
         >
           <span className="px-3 py-1.5 bg-[#EA4335] text-white text-xs font-semibold rounded-lg shadow-lg whitespace-nowrap transform group-hover:scale-105 transition-all duration-300 font-heading">

@@ -6,7 +6,7 @@ from django.db.models.signals import pre_save, post_save, post_delete
 from django.dispatch import receiver
 
 from core.models import (AdminNotification, ContactMessage, PropertyEnquiry,
-                         ServiceEnquiry, Property, UserProfile, PropertyImage, PropertyVideo, PropertyLike)
+                         ServiceEnquiry, Property, UserProfile, PropertyImage, PropertyVideo, PropertyLike, MediaAsset)
 from core.services.notification_service import notify_admin
 from core.services.audit_service import log_action
 
@@ -262,4 +262,14 @@ def handle_property_video_deleted(sender, instance, **kwargs):
             instance.video_upload.delete(save=False)
         except Exception as e:
             logger.warning(f"Failed to delete video file from storage: {e}")
+
+
+@receiver(post_delete, sender=MediaAsset)
+def handle_media_asset_deleted(sender, instance, **kwargs):
+    """Deletes uploaded media library file from Supabase/local storage when DB record is deleted."""
+    if instance.file:
+        try:
+            instance.file.delete(save=False)
+        except Exception as e:
+            logger.warning(f"Failed to delete media asset file from storage: {e}")
 
