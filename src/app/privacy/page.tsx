@@ -1,6 +1,7 @@
 import { SITE } from "@/data/site";
 import FadeIn from "@/components/ui/FadeIn";
 import type { Metadata } from "next";
+import BackButton from "@/components/properties/BackButton";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
@@ -11,6 +12,9 @@ export default function PrivacyPage() {
   return (
     <div className="pt-32 pb-20">
       <div className="max-w-3xl mx-auto px-6 md:px-12">
+        <div className="mb-6">
+          <BackButton />
+        </div>
         <FadeIn>
           <h1 className="section-heading mb-8">Privacy Policy</h1>
           <div className="space-y-6 text-navy/70 dark:text-white/70 leading-relaxed">

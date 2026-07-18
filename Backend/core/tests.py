@@ -331,6 +331,24 @@ class PropertyVideoTests(TestCase):
             "https://player.vimeo.com/video/80612345"
         )
 
+    def test_property_video_deletion_removes_file(self):
+        from unittest.mock import patch
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        video_file = SimpleUploadedFile("test_video.mp4", b"dummy content", content_type="video/mp4")
+        video = PropertyVideo.objects.create(
+            property=self.property,
+            title="Upload Tour",
+            video_type="upload",
+            video_upload=video_file,
+        )
+        self.assertTrue(video.video_upload.name.endswith(".mp4"))
+
+        # Verify that deleting the object calls storage delete
+        with patch("django.core.files.storage.default_storage.delete") as mock_delete:
+            video.delete()
+            mock_delete.assert_called_once()
+
 
 class APITests(APITestCase):
     def setUp(self):

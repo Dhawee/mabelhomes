@@ -58,6 +58,11 @@ export default function SafeImage({
     }
   };
 
+  const isAlreadyOptimized = typeof src === "string" && (
+    src.includes("/optimized/") || 
+    src.includes("/thumbnails/")
+  );
+
   return (
     <div className={`relative w-full h-full ${containerClassName}`}>
       {/* Pulse skeleton placeholder */}
@@ -73,6 +78,7 @@ export default function SafeImage({
         fill={fill}
         priority={priority}
         sizes={sizes}
+        unoptimized={isAlreadyOptimized || props.unoptimized}
         className={`${className} transition-opacity duration-300 ${loading ? 'opacity-0' : 'opacity-100'}`}
         onLoad={() => setLoading(false)}
         onError={handleError}

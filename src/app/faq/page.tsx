@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ChevronDown, HelpCircle, MessageSquare } from "lucide-react";
 import { FAQS } from "@/data/site";
 import FadeIn from "@/components/ui/FadeIn";
+import BackButton from "@/components/properties/BackButton";
 
 export default function FAQPage() {
   const [openFaqId, setOpenFaqId] = useState<string | null>("1"); // Open the first FAQ by default
@@ -18,6 +19,9 @@ export default function FAQPage() {
   return (
     <div className="pt-32 pb-20 bg-white dark:bg-navy text-navy dark:text-white min-h-screen">
       <div className="max-w-4xl mx-auto px-6 md:px-12">
+        <div className="mb-6">
+          <BackButton />
+        </div>
         {/* Header */}
         <FadeIn className="text-center mb-16">
           <p className="section-subheading">Support & Answers</p>

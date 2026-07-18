@@ -16,6 +16,7 @@ def search_and_filter_properties(
     include_hidden=False,
     is_visible=None,
     show_deleted=False,
+    prefetch_videos=True,
 ):
     """
     Queries visible, non-deleted properties based on filters.
@@ -35,9 +36,11 @@ def search_and_filter_properties(
     queryset = (
         Property.objects.filter(base_filter)
         .select_related("property_type")
-        .prefetch_related("images", "videos")
-        .order_by("-created_at")
+        .prefetch_related("images")
     )
+    if prefetch_videos:
+        queryset = queryset.prefetch_related("videos")
+    queryset = queryset.order_by("-created_at")
 
     # Apply search text matches across multiple fields
     if search_query:

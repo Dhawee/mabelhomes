@@ -132,6 +132,7 @@ class PropertyViewSet(viewsets.ModelViewSet):
             include_hidden=is_staff,
             is_visible=is_visible_val,
             show_deleted=show_deleted_val,
+            prefetch_videos=(self.action != "list"),
         )
 
     def create(self, request, *args, **kwargs):
@@ -480,6 +481,19 @@ class PropertyVideoViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save()
+
+    def perform_destroy(self, instance):
+        title = instance.property.title
+        pk = instance.pk
+        instance.delete()
+        log_action(
+            user=self.request.user,
+            action="delete",
+            model_name="PropertyVideo",
+            object_id=pk,
+            description=f"Removed video from property '{title}'",
+            request=self.request
+        )
 
     @action(detail=True, methods=["post"])
     def set_primary(self, request, pk=None):

@@ -853,14 +853,14 @@ export default function PropertyForm({
                           )}
                         </div>
                         {/* Video Details and Actions */}
-                        <div className="p-2.5 flex-1 flex flex-col justify-between space-y-2">
+                        <div className="p-2.5 flex-1 flex flex-col justify-between space-y-2 min-w-0">
                           <div>
                             <p className="text-xs font-bold text-gray-800 line-clamp-1">{vid.title || "Video Asset"}</p>
                             <p className="text-[10px] text-gray-400 truncate max-w-[200px]" title={vid.video_src || vid.video_url || ""}>
                               {vid.video_src || vid.video_url}
                             </p>
                           </div>
-                          <div className="flex items-center justify-between gap-2 pt-1 border-t border-gray-100">
+                          <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-gray-100">
                             <div className="flex items-center gap-1">
                               <label className="text-[9px] text-gray-500 font-bold uppercase">Order</label>
                               <input
@@ -870,7 +870,7 @@ export default function PropertyForm({
                                 className="w-10 text-center text-[10px] border border-gray-200 rounded p-0.5"
                               />
                             </div>
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1.5 shrink-0">
                               {!vid.is_primary && (
                                 <button
                                   type="button"

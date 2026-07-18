@@ -13,6 +13,7 @@ import FadeIn from "@/components/ui/FadeIn";
 import type { Metadata } from "next";
 import { API_BASE_URL } from "@/config";
 import { Service } from "@/types";
+import BackButton from "@/components/properties/BackButton";
 
 export const metadata: Metadata = {
   title: "Services",
@@ -47,6 +48,9 @@ export default async function ServicesPage() {
   return (
     <div className="pt-32 pb-20">
       <div className="max-w-7xl mx-auto px-6 md:px-12">
+        <div className="mb-6">
+          <BackButton />
+        </div>
         <FadeIn className="text-center mb-16">
           <p className="section-subheading">What We Offer</p>
           <h1 className="section-heading">Our Services</h1>

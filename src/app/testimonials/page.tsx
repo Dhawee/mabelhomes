@@ -3,6 +3,7 @@ import { Star } from "lucide-react";
 import { TESTIMONIALS, SITE } from "@/data/site";
 import FadeIn from "@/components/ui/FadeIn";
 import type { Metadata } from "next";
+import BackButton from "@/components/properties/BackButton";
 
 export const metadata: Metadata = {
   title: "Testimonials",
@@ -13,6 +14,9 @@ export default function TestimonialsPage() {
   return (
     <div className="pt-32 pb-20">
       <div className="max-w-7xl mx-auto px-6 md:px-12">
+        <div className="mb-6">
+          <BackButton />
+        </div>
         <FadeIn className="text-center mb-16">
           <p className="section-subheading">Reviews</p>
           <h1 className="section-heading">Client Testimonials</h1>

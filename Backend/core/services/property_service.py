@@ -132,21 +132,26 @@ def toggle_like_property(
             "message": str,
         }
     """
-    try:
-        prop = Property.objects.select_for_update().get(
-            id=property_id, is_visible=True, is_deleted=False
-        )
-    except Property.DoesNotExist:
-        return {"liked": False, "likes_count": 0, "message": "Property not found."}
-
     if not session_key:
+        try:
+            prop = Property.objects.get(id=property_id, is_visible=True, is_deleted=False)
+            likes_count = prop.likes_count
+        except Property.DoesNotExist:
+            likes_count = 0
         return {
             "liked": False,
-            "likes_count": prop.likes_count,
+            "likes_count": likes_count,
             "message": "Visitor ID is required.",
         }
 
     with transaction.atomic():
+        try:
+            prop = Property.objects.select_for_update().get(
+                id=property_id, is_visible=True, is_deleted=False
+            )
+        except Property.DoesNotExist:
+            return {"liked": False, "likes_count": 0, "message": "Property not found."}
+
         # Query only by visitor session_key (UUID) to prevent NAT/office IP conflicts
         existing_like = (
             PropertyLike.objects.filter(property=prop, session_key=session_key).first()

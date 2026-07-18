@@ -5,6 +5,7 @@ import { Award, GraduationCap } from "lucide-react";
 import { SITE, STATS } from "@/data/site";
 import Counter from "@/components/ui/Counter";
 import FadeIn from "@/components/ui/FadeIn";
+import BackButton from "@/components/properties/BackButton";
 
 const certifications = [
   "Licensed Real Estate Broker — Lagos State",
@@ -35,6 +36,9 @@ export default function AboutClient() {
   return (
     <div className="pt-32 pb-20 bg-white dark:bg-navy text-navy dark:text-white">
       <div className="max-w-7xl mx-auto px-6 md:px-12">
+        <div className="mb-6">
+          <BackButton />
+        </div>
         {/* Header */}
         <FadeIn className="text-center mb-16">
           <p className="section-subheading">About</p>

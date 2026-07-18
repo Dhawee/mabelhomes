@@ -127,7 +127,7 @@ export default function FeaturedProperties() {
               >
                 <div className="luxury-card group hover:shadow-luxury-lg h-full flex flex-col justify-between bg-white dark:bg-navy/40">
                   <div className="relative aspect-[4/3] overflow-hidden">
-                    {property.images && property.images.length > 0 ? (
+                    {property.primary_image || (property.images && property.images.length > 0) ? (
                       <SafeImage
                         src={property.primary_image || property.images[0]}
                         alt={property.title}

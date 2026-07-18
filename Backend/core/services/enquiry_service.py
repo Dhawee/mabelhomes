@@ -184,7 +184,6 @@ def create_contact_message(name, email, phone, message, subject=""):
 # Enquiry Reply Service
 # ---------------------------------------------------------------------------
 
-@transaction.atomic
 def send_enquiry_reply(
     enquiry_instance,
     subject: str,
@@ -215,7 +214,29 @@ def send_enquiry_reply(
         else "Mabel Homes Team"
     )
 
-    # Send the email
+    # 1. Record reply and update enquiry atomically
+    with transaction.atomic():
+        # Get the ContentType for the generic FK
+        content_type = ContentType.objects.get_for_model(enquiry_instance)
+
+        # Record the reply (initially email_delivered=False)
+        reply = EnquiryReply.objects.create(
+            content_type=content_type,
+            object_id=enquiry_instance.pk,
+            sender=sender_user,
+            recipient_email=recipient_email,
+            subject=subject,
+            message=message,
+            email_delivered=False,
+        )
+
+        # Mark enquiry as replied
+        type(enquiry_instance).objects.filter(pk=enquiry_instance.pk).update(
+            replied=True,
+            status="Responded",
+        )
+
+    # 2. Send the email outside of the transaction block
     delivered = send_reply_email(
         recipient_email=recipient_email,
         subject=subject,
@@ -223,27 +244,10 @@ def send_enquiry_reply(
         sender_name=sender_name,
     )
 
-    # Get the ContentType for the generic FK
-    content_type = ContentType.objects.get_for_model(enquiry_instance)
-
-    # Record the reply
-    reply = EnquiryReply.objects.create(
-        content_type=content_type,
-        object_id=enquiry_instance.pk,
-        sender=sender_user,
-        recipient_email=recipient_email,
-        subject=subject,
-        message=message,
-        email_delivered=delivered,
-    )
-
-    # Mark enquiry as replied
-    type(enquiry_instance).objects.filter(pk=enquiry_instance.pk).update(
-        replied=True,
-        status="Responded",
-    )
-
+    # 3. Update delivery flag if succeeded
     if delivered:
+        reply.email_delivered = True
+        reply.save(update_fields=["email_delivered"])
         logger.info(
             f"Reply #{reply.id} sent to {recipient_email} for "
             f"{type(enquiry_instance).__name__} #{enquiry_instance.pk}"

@@ -95,7 +95,7 @@ def notify_admin(title: str, message: str, notification_type: str = "system") ->
             )
 
     thread = threading.Thread(target=_send)
-    thread.daemon = True
+    thread.daemon = False
     thread.start()
 
 

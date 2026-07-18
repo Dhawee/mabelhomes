@@ -7,6 +7,7 @@ import { Property } from "@/types";
 import { API_BASE_URL } from "@/config";
 import PropertyCard from "@/components/properties/PropertyCard";
 import FadeIn from "@/components/ui/FadeIn";
+import BackButton from "@/components/properties/BackButton";
 
 function PropertiesContent() {
   const searchParams = useSearchParams();
@@ -156,6 +157,9 @@ export default function PropertiesPage() {
   return (
     <div className="pt-32 pb-20">
       <div className="max-w-7xl mx-auto px-6 md:px-12">
+        <div className="mb-6">
+          <BackButton />
+        </div>
         <FadeIn className="text-center mb-12">
           <p className="section-subheading">Portfolio</p>
           <h1 className="section-heading">Our Properties</h1>

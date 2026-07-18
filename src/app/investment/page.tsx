@@ -3,6 +3,7 @@ import Link from "next/link";
 import { SITE } from "@/data/site";
 import FadeIn from "@/components/ui/FadeIn";
 import type { Metadata } from "next";
+import BackButton from "@/components/properties/BackButton";
 
 export const metadata: Metadata = {
   title: "Investment",
@@ -14,6 +15,9 @@ export default function InvestmentPage() {
     <>
       <div className="pt-32 pb-10">
         <div className="max-w-7xl mx-auto px-6 md:px-12">
+          <div className="mb-6">
+            <BackButton />
+          </div>
           <FadeIn className="text-center mb-8">
             <p className="section-subheading">Investment</p>
             <h1 className="section-heading">Investment Opportunities</h1>
