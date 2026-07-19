@@ -270,7 +270,9 @@ class PropertyAdmin(admin.ModelAdmin):
                     "slug",
                     "property_type",
                     "status",
+                    "currency",
                     "price",
+                    "max_price",
                     "previous_price",
                     "current_price",
                 )
@@ -323,7 +325,11 @@ class PropertyAdmin(admin.ModelAdmin):
     )
 
     def price_display(self, obj):
-        return f"₦{obj.price:,.0f}"
+        symbol = "$" if obj.currency == "USD" else "₦"
+        price_str = f"{symbol}{obj.price:,.0f}"
+        if obj.max_price:
+            price_str += f" – {symbol}{obj.max_price:,.0f}"
+        return price_str
 
     price_display.short_description = "Price"
 

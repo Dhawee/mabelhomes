@@ -105,25 +105,29 @@ export default function Footer() {
               {SITE.phone.map((phone) => {
                 const isWhatsApp = phone.includes("706");
                 return (
-                  <li key={phone} className="flex items-center gap-3 text-sm text-white/60 hover:text-gold transition-colors">
-                    {isWhatsApp ? (
-                      <WhatsAppIcon className="text-gold shrink-0" />
-                    ) : (
-                      <Phone size={14} className="text-gold shrink-0" />
-                    )}
+                  <li key={phone}>
                     <a
                       href={isWhatsApp ? `https://wa.me/${phone.replace(/[\s+]/g, "")}` : `tel:${phone.replace(/[\s+]/g, "")}`}
                       target={isWhatsApp ? "_blank" : undefined}
                       rel={isWhatsApp ? "noopener noreferrer" : undefined}
+                      className="flex items-center gap-3 text-sm text-white/60 hover:text-gold transition-colors"
                     >
+                      {isWhatsApp ? (
+                        <WhatsAppIcon className="text-gold shrink-0" />
+                      ) : (
+                        <Phone size={14} className="text-gold shrink-0" />
+                      )}
                       {phone}
                     </a>
                   </li>
                 );
               })}
-              <li className="flex items-center gap-3 text-sm text-white/60 hover:text-gold transition-colors">
-                <Mail size={14} className="text-gold shrink-0" />
-                <a href={`mailto:${SITE.email}`}>
+              <li>
+                <a
+                  href={`mailto:${SITE.email}`}
+                  className="flex items-center gap-3 text-sm text-white/60 hover:text-gold transition-colors"
+                >
+                  <Mail size={14} className="text-gold shrink-0" />
                   {SITE.email}
                 </a>
               </li>

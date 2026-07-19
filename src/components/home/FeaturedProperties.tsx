@@ -1,11 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
-import { Bed, Bath, Maximize, MapPin, Heart, ChevronLeft, ChevronRight } from "lucide-react";
+import { Bed, Bath, Maximize, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import FadeIn from "@/components/ui/FadeIn";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 
 import { Property } from "@/types";
@@ -17,22 +16,13 @@ export default function FeaturedProperties() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(true);
   const [visibleItems, setVisibleItems] = useState(3);
+  
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const gap = 24; // gap-6 in pixels
 
-  useEffect(() => {
-    fetch(`${API_BASE_URL}/api/properties/?featured=true&page_size=100`)
-      .then((res) => res.json())
-      .then((data) => {
-        const list = Array.isArray(data) ? data : (data.results || []);
-        setProperties(list);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Failed to fetch featured properties:", err);
-        setLoading(false);
-      });
-  }, []);
-
+  // Responsive items count
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 640) {
@@ -48,20 +38,86 @@ export default function FeaturedProperties() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Fetch ALL featured properties via pagination loop
+  useEffect(() => {
+    async function fetchAllFeatured() {
+      const all: Property[] = [];
+      let url: string | null = `${API_BASE_URL}/api/properties/?featured=true`;
+      try {
+        while (url) {
+          const res: Response = await fetch(url);
+          const data: { results?: Property[]; next?: string | null } | Property[] = await res.json();
+          if (Array.isArray(data)) {
+            all.push(...data);
+            url = null;
+          } else {
+            all.push(...(data.results || []));
+            url = data.next || null;
+          }
+        }
+        setProperties(all);
+      } catch (err) {
+        console.error("Failed to fetch featured properties:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchAllFeatured();
+  }, []);
 
+  const handleNext = useCallback(() => {
+    if (properties.length === 0) return;
+    setCurrentIndex((prev) => {
+      if (prev >= properties.length) return prev;
+      return prev + 1;
+    });
+  }, [properties.length]);
 
-  const maxIndex = Math.max(0, properties.length - visibleItems);
+  const resetTimer = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (properties.length > visibleItems) {
+      timerRef.current = setInterval(handleNext, 5000);
+    }
+  }, [properties.length, visibleItems, handleNext]);
+
+  useEffect(() => {
+    resetTimer();
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [resetTimer]);
+
+  useEffect(() => {
+    if (!isTransitioning) {
+      const t = setTimeout(() => {
+        setIsTransitioning(true);
+      }, 50);
+      return () => clearTimeout(t);
+    }
+  }, [isTransitioning]);
 
   const handlePrev = () => {
-    setCurrentIndex((prev) => (prev === 0 ? maxIndex : prev - 1));
+    if (timerRef.current) clearInterval(timerRef.current);
+
+    if (currentIndex === 0) {
+      setIsTransitioning(false);
+      setCurrentIndex(properties.length);
+      setTimeout(() => {
+        setIsTransitioning(true);
+        setCurrentIndex(properties.length - 1);
+      }, 50);
+    } else {
+      setCurrentIndex((prev) => prev - 1);
+    }
+
+    resetTimer();
   };
 
-  const handleNext = () => {
-    setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
+  const handleManualNext = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    handleNext();
+    resetTimer();
   };
-
-  // Gap between items is 24px (gap-6)
-  const gap = 24;
 
   if (loading) {
     return (
@@ -71,18 +127,25 @@ export default function FeaturedProperties() {
     );
   }
 
+  if (properties.length === 0) return null;
+
+  // Append first set of visible items to the end for a seamless infinite loop
+  const extendedProperties = [...properties, ...properties.slice(0, visibleItems)];
+  const hasMultiplePages = properties.length > visibleItems;
+
   return (
     <section id="properties" className="py-12 md:py-16 px-6 md:px-12 bg-white dark:bg-navy border-b border-gray-100 dark:border-white/5">
       <div className="max-w-7xl mx-auto w-full pt-2">
+
+        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
           <FadeIn>
             <p className="section-subheading">Featured Listings</p>
             <h2 className="section-heading">Exceptional Homes</h2>
           </FadeIn>
 
-          {/* Carousel Controls */}
-          {properties.length > visibleItems && (
-            <FadeIn className="flex gap-3">
+          {hasMultiplePages && (
+            <FadeIn className="flex items-center gap-3">
               <button
                 onClick={handlePrev}
                 className="w-12 h-12 rounded-full border border-navy/10 dark:border-white/10 hover:border-gold hover:bg-gold hover:text-white dark:hover:bg-gold dark:hover:border-gold transition-all duration-300 flex items-center justify-center text-navy dark:text-white shadow-sm active:scale-95 cursor-pointer"
@@ -91,7 +154,7 @@ export default function FeaturedProperties() {
                 <ChevronLeft size={20} />
               </button>
               <button
-                onClick={handleNext}
+                onClick={handleManualNext}
                 className="w-12 h-12 rounded-full border border-navy/10 dark:border-white/10 hover:border-gold hover:bg-gold hover:text-white dark:hover:bg-gold dark:hover:border-gold transition-all duration-300 flex items-center justify-center text-navy dark:text-white shadow-sm active:scale-95 cursor-pointer"
                 aria-label="Next properties"
               >
@@ -101,104 +164,111 @@ export default function FeaturedProperties() {
           )}
         </div>
 
-        {/* Carousel Viewport Container */}
+        {/* Sliding Viewport */}
         <div className="relative overflow-hidden w-full py-4">
           <motion.div
             className="flex gap-6"
             animate={{
-              x: `calc(-${currentIndex * (100 / visibleItems)}% - ${
-                currentIndex * (gap / visibleItems)
-              }px)`,
+              x: `calc(-${currentIndex * (100 / visibleItems)}% - ${currentIndex * (gap / visibleItems)}px)`,
             }}
-            transition={{ type: "spring", stiffness: 180, damping: 22 }}
+            transition={
+              isTransitioning
+                ? { type: "spring", stiffness: 180, damping: 24 }
+                : { duration: 0 }
+            }
+            onAnimationComplete={() => {
+              if (currentIndex === properties.length) {
+                setIsTransitioning(false);
+                setCurrentIndex(0);
+              }
+            }}
           >
-            {properties.map((property) => (
+            {extendedProperties.map((property, idx) => (
               <div
-                key={property.id}
+                key={`${property.id}-${idx}`}
                 style={{
                   minWidth:
                     visibleItems === 1
                       ? "100%"
                       : visibleItems === 2
-                      ? `calc(50% - ${gap / 2}px)`
-                      : `calc(33.333% - ${(gap * 2) / 3}px)`,
+                        ? `calc(50% - ${gap / 2}px)`
+                        : `calc(33.333% - ${(gap * 2) / 3}px)`,
                 }}
-                className="shrink-0"
+                className="flex flex-col luxury-card group hover:shadow-luxury-lg bg-white dark:bg-navy/40 h-full"
               >
-                <div className="luxury-card group hover:shadow-luxury-lg h-full flex flex-col justify-between bg-white dark:bg-navy/40">
-                  <div className="relative aspect-[4/3] overflow-hidden">
-                    {property.primary_image || (property.images && property.images.length > 0) ? (
-                      <SafeImage
-                        src={property.primary_image || property.images[0]}
-                        alt={property.title}
-                        fill
-                        className="object-cover group-hover:scale-110 transition-transform duration-700"
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        propertySlug={property.slug}
-                        imageId="primary_featured"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-navy/10 to-gold/10 flex items-center justify-center">
-                        <span className="text-navy/30 text-sm">No image</span>
-                      </div>
-                    )}
-                    <div className="absolute top-4 left-4 flex gap-2">
-                      <span className="px-3 py-1 bg-gold text-white text-xs font-semibold rounded-full font-heading">
-                        {property.status}
+                {/* Image */}
+                <div className="relative aspect-[4/3] overflow-hidden shrink-0">
+                  {property.primary_image || (property.images && property.images.length > 0) ? (
+                    <SafeImage
+                      src={property.primary_image || property.images[0]}
+                      alt={property.title}
+                      fill
+                      className="object-cover group-hover:scale-110 transition-transform duration-700"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      propertySlug={property.slug}
+                      imageId="primary_featured"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-navy/10 to-gold/10 flex items-center justify-center">
+                      <span className="text-navy/30 text-sm">No image</span>
+                    </div>
+                  )}
+                  <div className="absolute top-4 left-4 flex gap-2">
+                    <span className="px-3 py-1 bg-gold text-white text-xs font-semibold rounded-full font-heading">
+                      {property.status}
+                    </span>
+                    {property.luxury && (
+                      <span className="px-3 py-1 bg-navy/80 text-white text-xs font-semibold rounded-full backdrop-blur-sm font-heading">
+                        Luxury
                       </span>
-                      {property.luxury && (
-                        <span className="px-3 py-1 bg-navy/80 text-white text-xs font-semibold rounded-full backdrop-blur-sm font-heading">
-                          Luxury
+                    )}
+                  </div>
+                  <PropertyLikeButton
+                    property={property}
+                    variant="image-badge"
+                    iconSize={16}
+                  />
+                </div>
+
+                {/* Content */}
+                <div className="p-5 flex-1 flex flex-col justify-between bg-white dark:bg-navy/40">
+                  <div>
+                    <div className="flex items-center gap-1.5 text-navy/55 dark:text-white/55 text-xs mb-2 font-body">
+                      <MapPin size={13} className="text-gold shrink-0" />
+                      <span className="line-clamp-1">{property.location}</span>
+                    </div>
+                    <h3 className="font-heading text-base md:text-lg text-navy dark:text-white mb-2 leading-tight line-clamp-2">
+                      {property.title}
+                    </h3>
+                    <p className="font-heading text-lg md:text-xl text-gold mb-4 font-semibold">
+                      {formatPrice(property.price, property.max_price, property.currency)}
+                    </p>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center gap-3 text-xs text-navy/60 dark:text-white/60 mb-5 pb-4 border-b border-gray-100 dark:border-white/5 font-body flex-wrap">
+                      {property.bedrooms > 0 && (
+                        <span className="flex items-center gap-1 shrink-0">
+                          <Bed size={13} /> {property.bedrooms} Beds
+                        </span>
+                      )}
+                      {property.bathrooms > 0 && (
+                        <span className="flex items-center gap-1 shrink-0">
+                          <Bath size={13} /> {property.bathrooms} Baths
+                        </span>
+                      )}
+                      {property.sqft > 0 && (
+                        <span className="flex items-center gap-1 shrink-0">
+                          <Maximize size={13} /> {property.sqft.toLocaleString()} sqft
                         </span>
                       )}
                     </div>
-                    <PropertyLikeButton
-                      property={property}
-                      variant="image-badge"
-                      iconSize={16}
-                    />
-                  </div>
-
-                  <div className="p-6 flex-1 flex flex-col justify-between bg-white dark:bg-navy/40">
-                    <div>
-                      <div className="flex items-center gap-1.5 text-navy/55 dark:text-white/55 text-xs mb-2 font-body">
-                        <MapPin size={13} className="text-gold shrink-0" />
-                        <span>{property.location}</span>
-                      </div>
-                      <h3 className="font-heading text-lg md:text-xl text-navy dark:text-white mb-2 leading-tight">
-                        {property.title}
-                      </h3>
-                      <p className="font-heading text-xl md:text-2xl text-gold mb-4 font-semibold">
-                        {formatPrice(property.price)}
-                      </p>
-                    </div>
-
-                    <div>
-                      <div className="flex items-center gap-4 text-xs text-navy/60 dark:text-white/60 mb-6 pb-5 border-b border-gray-100 dark:border-white/5 font-body">
-                        {property.bedrooms > 0 && (
-                          <span className="flex items-center gap-1 shrink-0">
-                            <Bed size={13} /> {property.bedrooms} Beds
-                          </span>
-                        )}
-                        {property.bathrooms > 0 && (
-                          <span className="flex items-center gap-1 shrink-0">
-                            <Bath size={13} /> {property.bathrooms} Baths
-                          </span>
-                        )}
-                        {property.sqft > 0 && (
-                          <span className="flex items-center gap-1 shrink-0">
-                            <Maximize size={13} /> {property.sqft.toLocaleString()} sqft
-                          </span>
-                        )}
-                      </div>
-
-                      <Link
-                        href={`/properties/${property.slug}`}
-                        className="btn-outline-gold w-full text-center text-xs !py-3 block"
-                      >
-                        View Details
-                      </Link>
-                    </div>
+                    <Link
+                      href={`/properties/${property.slug}`}
+                      className="btn-outline-gold w-full text-center text-xs !py-3 block"
+                    >
+                      View Details
+                    </Link>
                   </div>
                 </div>
               </div>

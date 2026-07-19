@@ -25,6 +25,8 @@ export interface Property {
   location: string;
   city: string;
   price: number;
+  max_price?: number | null;
+  currency?: "NGN" | "USD" | null;
   previous_price?: number;
   current_price?: number;
   bedrooms: number;

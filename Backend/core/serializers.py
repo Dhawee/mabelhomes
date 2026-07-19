@@ -145,6 +145,8 @@ class PropertySerializer(serializers.ModelSerializer):
             "state",
             "country",
             "price",
+            "max_price",
+            "currency",
             "previous_price",
             "current_price",
             "bedrooms",
@@ -234,6 +236,23 @@ class PropertySerializer(serializers.ModelSerializer):
     def get_coordinates(self, obj):
         return {"lat": float(obj.latitude), "lng": float(obj.longitude)}
 
+    def validate(self, data):
+        """Enforce price range constraints at the serializer level."""
+        # Resolve effective price — use data value or fall back to existing instance value (PATCH)
+        price = data.get("price", getattr(self.instance, "price", None))
+        max_price = data.get("max_price", getattr(self.instance, "max_price", None))
+
+        if max_price is not None:
+            if not price or price <= 0:
+                raise serializers.ValidationError(
+                    {"max_price": "Maximum Price cannot exist if Price is empty or invalid."}
+                )
+            if max_price <= price:
+                raise serializers.ValidationError(
+                    {"max_price": "Maximum Price must be greater than the Minimum Price."}
+                )
+        return data
+
 
 class PropertyListSerializer(serializers.ModelSerializer):
     """
@@ -250,6 +269,8 @@ class PropertyListSerializer(serializers.ModelSerializer):
             "slug",
             "title",
             "price",
+            "max_price",
+            "currency",
             "bedrooms",
             "bathrooms",
             "sqft",

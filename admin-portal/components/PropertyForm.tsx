@@ -40,10 +40,15 @@ export default function PropertyForm({
   loading,
   title,
 }: PropertyFormProps) {
+  const [isRange, setIsRange] = useState<boolean>(!!initialData.max_price);
+  const [currency, setCurrency] = useState<"NGN" | "USD">(
+    (initialData.currency as "NGN" | "USD") || "NGN"
+  );
   const [form, setForm] = useState({
     title: initialData.title ?? "",
     description: initialData.description ?? "",
     price: initialData.price ?? "",
+    max_price: (initialData.max_price ?? "") as number | "",
     bedrooms: initialData.bedrooms ?? "",
     bathrooms: initialData.bathrooms ?? "",
     sqft: initialData.sqft ?? "",
@@ -113,7 +118,16 @@ export default function PropertyForm({
     const clientErrors: Record<string, string[]> = {};
     if (!form.title?.trim()) clientErrors.title = ["Property Title is required."];
     if (!form.description?.trim()) clientErrors.description = ["Description is required."];
-    if (!form.price || Number(form.price) <= 0) clientErrors.price = ["Price must be greater than 0."];
+    if (!form.price || Number(form.price) <= 0) {
+      clientErrors.price = [isRange ? "Minimum Price must be a positive number." : "Price must be greater than 0."];
+    }
+    if (isRange) {
+      if (!form.max_price || Number(form.max_price) <= 0) {
+        clientErrors.max_price = ["Maximum Price must be a positive number."];
+      } else if (Number(form.max_price) <= Number(form.price)) {
+        clientErrors.max_price = ["Maximum Price must be greater than the Minimum Price."];
+      }
+    }
     if (!form.property_type) clientErrors.property_type = ["Property Type is required."];
     if (!form.city?.trim()) clientErrors.city = ["City is required."];
     if (!form.location?.trim()) clientErrors.location = ["Address / Neighborhood is required."];
@@ -134,6 +148,8 @@ export default function PropertyForm({
       title: form.title,
       description: form.description,
       price: Number(form.price),
+      max_price: isRange && form.max_price !== "" ? Number(form.max_price) : null,
+      currency: currency,
       bedrooms: Number(form.bedrooms || 0),
       bathrooms: Number(form.bathrooms || 0),
       sqft: Number(form.sqft || 0),
@@ -204,7 +220,7 @@ export default function PropertyForm({
         formData.append("property", String(initialData.id));
         formData.append("image_upload", file);
         formData.append("order", String(images.length + i + 1));
-        
+
         try {
           setUploadProgress(`Uploading (${i + 1}/${files.length})...`);
           const res = await api.post<any>("/api/property-images/", formData);
@@ -333,7 +349,7 @@ export default function PropertyForm({
           formData.append("title", videoTitle || videoFile!.name);
           formData.append("video_type", "upload");
           formData.append("order", String(videos.length + 1));
-          
+
           const res = await api.post<any>("/api/property-videos/", formData);
           setVideos((prev) => [...prev, res]);
           setVideoFile(null);
@@ -489,9 +505,55 @@ export default function PropertyForm({
               )}
             </div>
 
+            {/* Currency Selector */}
+            <div className="flex items-center gap-3 pt-1 pb-1">
+              <span className="text-sm font-medium text-gray-700">Currency:</span>
+              <div className="flex rounded-lg border border-gray-200 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setCurrency("NGN")}
+                  className={`px-4 py-1.5 text-sm font-semibold transition-colors ${
+                    currency === "NGN"
+                      ? "bg-navy text-white"
+                      : "bg-white text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  ₦ NGN
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrency("USD")}
+                  className={`px-4 py-1.5 text-sm font-semibold transition-colors border-l border-gray-200 ${
+                    currency === "USD"
+                      ? "bg-navy text-white"
+                      : "bg-white text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  $ USD
+                </button>
+              </div>
+            </div>
+
+            {/* Price Range Toggle */}
+            <div className="flex items-center gap-2 pt-1 pb-1">
+              <input
+                id="is_range"
+                type="checkbox"
+                checked={isRange}
+                onChange={(e) => {
+                  setIsRange(e.target.checked);
+                  if (!e.target.checked) setForm((f) => ({ ...f, max_price: "" }));
+                }}
+                className="w-4 h-4 accent-blue-600 cursor-pointer"
+              />
+              <label htmlFor="is_range" className="text-sm font-medium text-gray-700 cursor-pointer select-none">
+                This property has a price range
+              </label>
+            </div>
+
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <label className="form-label">Price (₦)</label>
+                <label className="form-label">{isRange ? `Minimum Price (${currency === "USD" ? "$" : "₦"})` : `Price (${currency === "USD" ? "$" : "₦"})`}</label>
                 <input
                   id="price"
                   name="price"
@@ -507,6 +569,51 @@ export default function PropertyForm({
                 )}
               </div>
 
+              {isRange ? (
+                <div>
+                  <label className="form-label">{`Maximum Price (${currency === "USD" ? "$" : "₦"})`}</label>
+                  <input
+                    id="max_price"
+                    name="max_price"
+                    type="number"
+                    min={0}
+                    className={`form-input ${validationErrors.max_price ? "border-red-500 ring-1 ring-red-500" : ""}`}
+                    value={form.max_price || ""}
+                    onChange={(e) => setForm((f) => ({ ...f, max_price: Number(e.target.value) }))}
+                  />
+                  {validationErrors.max_price && (
+                    <p className="text-red-500 text-xs mt-1">{validationErrors.max_price[0]}</p>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <label className="form-label">Property Type</label>
+                  {fetchingTypes ? (
+                    <div className="text-gray-400 text-sm py-2">Loading types...</div>
+                  ) : (
+                    <>
+                      <select
+                        id="property_type"
+                        name="property_type"
+                        className={`form-input ${validationErrors.property_type ? "border-red-500 ring-1 ring-red-500" : ""}`}
+                        value={form.property_type || ""}
+                        onChange={(e) => setForm((f) => ({ ...f, property_type: Number(e.target.value) }))}
+                      >
+                        {types.map((t) => (
+                          <option key={t.id} value={t.id}>{t.name}</option>
+                        ))}
+                      </select>
+                      {validationErrors.property_type && (
+                        <p className="text-red-500 text-xs mt-1">{validationErrors.property_type[0]}</p>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* When range is on, show Property Type in its own row below */}
+            {isRange && (
               <div>
                 <label className="form-label">Property Type</label>
                 {fetchingTypes ? (
@@ -521,9 +628,7 @@ export default function PropertyForm({
                       onChange={(e) => setForm((f) => ({ ...f, property_type: Number(e.target.value) }))}
                     >
                       {types.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.name}
-                        </option>
+                        <option key={t.id} value={t.id}>{t.name}</option>
                       ))}
                     </select>
                     {validationErrors.property_type && (
@@ -532,7 +637,7 @@ export default function PropertyForm({
                   </>
                 )}
               </div>
-            </div>
+            )}
           </div>
 
           {/* Specs card */}

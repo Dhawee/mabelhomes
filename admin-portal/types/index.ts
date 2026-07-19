@@ -19,6 +19,8 @@ export interface Property {
   state?: string;
   country?: string;
   price: number;
+  max_price?: number | null;
+  currency?: "NGN" | "USD" | null;
   previous_price?: number;
   current_price?: number;
   status: "For Sale" | "For Rent" | "Sold" | "Under Offer" | "Shortlet" | "Archived";

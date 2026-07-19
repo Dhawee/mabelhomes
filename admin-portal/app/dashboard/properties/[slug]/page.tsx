@@ -20,6 +20,7 @@ import {
   Bath,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { formatAdminPrice } from "@/lib/utils";
 import type { Property, PropertyEnquiry } from "@/types";
 
 interface Props {
@@ -308,7 +309,9 @@ export default function PropertyDetailsPage({ params }: Props) {
             </div>
             <div className="flex justify-between items-center py-2 border-b border-gray-100">
               <span className="text-sm text-gray-500">Price</span>
-              <span className="text-lg font-bold text-gold">₦{property.price.toLocaleString()}</span>
+              <span className="text-lg font-bold text-gold">
+                {formatAdminPrice(property.price, property.max_price, property.currency)}
+              </span>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-gray-100">
               <span className="text-sm text-gray-500">Likes</span>

@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Home, Search, Eye, EyeOff, Star, Heart, Plus, RefreshCw } from "lucide-react";
 import { api } from "@/lib/api";
+import { formatAdminPrice } from "@/lib/utils";
 import type { Property, PaginatedResponse } from "@/types";
 
 export default function PropertiesPage() {
@@ -206,7 +207,7 @@ export default function PropertiesPage() {
                         </span>
                       </td>
                       <td className="text-sm font-semibold" style={{ color: "var(--color-gold)" }}>
-                        ₦{prop.price.toLocaleString()}
+                        {formatAdminPrice(prop.price, prop.max_price, prop.currency)}
                       </td>
                       <td className="text-sm text-gray-600">{prop.city}</td>
                       <td>
@@ -218,11 +219,10 @@ export default function PropertiesPage() {
                       <td>
                         <button
                           onClick={() => toggleVisibility(prop)}
-                          className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full transition-colors ${
-                            prop.is_visible
+                          className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full transition-colors ${prop.is_visible
                               ? "bg-green-100 text-green-700 hover:bg-green-200"
                               : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                          }`}
+                            }`}
                           title={prop.is_visible ? "Click to hide" : "Click to show"}
                         >
                           {prop.is_visible ? (
@@ -235,11 +235,10 @@ export default function PropertiesPage() {
                       <td>
                         <button
                           onClick={() => toggleFeatured(prop)}
-                          className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full transition-colors ${
-                            prop.featured
+                          className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full transition-colors ${prop.featured
                               ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
                               : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                          }`}
+                            }`}
                         >
                           <Star size={12} />
                           {prop.featured ? "Featured" : "Normal"}

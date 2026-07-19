@@ -1,15 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { currencySymbol } from "@/lib/utils";
 
 interface MortgageCalculatorProps {
   price: number;
+  currency?: string | null;
 }
 
-export default function MortgageCalculator({ price }: MortgageCalculatorProps) {
+export default function MortgageCalculator({ price, currency }: MortgageCalculatorProps) {
   const [downPayment, setDownPayment] = useState(20);
   const [interestRate, setInterestRate] = useState(18);
   const [loanTerm, setLoanTerm] = useState(20);
+
+  const sym = currencySymbol(currency);
 
   const principal = price * (1 - downPayment / 100);
   const monthlyRate = interestRate / 100 / 12;
@@ -19,7 +23,7 @@ export default function MortgageCalculator({ price }: MortgageCalculatorProps) {
     monthlyRate === 0
       ? principal / numPayments
       : (principal * monthlyRate * Math.pow(1 + monthlyRate, numPayments)) /
-        (Math.pow(1 + monthlyRate, numPayments) - 1);
+      (Math.pow(1 + monthlyRate, numPayments) - 1);
 
   const totalPayment = monthlyPayment * numPayments;
   const totalInterest = totalPayment - principal;
@@ -33,7 +37,7 @@ export default function MortgageCalculator({ price }: MortgageCalculatorProps) {
       <div className="space-y-6">
         <div>
           <label className="text-sm text-navy/60 dark:text-white/60 mb-2 block">
-            Property Price: ₦{price.toLocaleString()}
+            Property Price: {sym}{price.toLocaleString()}
           </label>
         </div>
 
@@ -50,7 +54,7 @@ export default function MortgageCalculator({ price }: MortgageCalculatorProps) {
             className="w-full accent-gold"
           />
           <p className="text-xs text-navy/40 dark:text-white/40 mt-1">
-            ₦{(price * (downPayment / 100)).toLocaleString()}
+            {sym}{(price * (downPayment / 100)).toLocaleString()}
           </p>
         </div>
 
@@ -87,19 +91,19 @@ export default function MortgageCalculator({ price }: MortgageCalculatorProps) {
           <div className="flex justify-between">
             <span className="text-sm text-navy/60 dark:text-white/60">Monthly Payment</span>
             <span className="font-heading text-xl text-gold">
-              ₦{Math.round(monthlyPayment).toLocaleString()}
+              {sym}{Math.round(monthlyPayment).toLocaleString()}
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-sm text-navy/60 dark:text-white/60">Total Interest</span>
             <span className="text-sm text-navy dark:text-white">
-              ₦{Math.round(totalInterest).toLocaleString()}
+              {sym}{Math.round(totalInterest).toLocaleString()}
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-sm text-navy/60 dark:text-white/60">Total Payment</span>
             <span className="text-sm text-navy dark:text-white">
-              ₦{Math.round(totalPayment).toLocaleString()}
+              {sym}{Math.round(totalPayment).toLocaleString()}
             </span>
           </div>
         </div>

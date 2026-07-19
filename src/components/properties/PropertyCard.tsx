@@ -65,7 +65,7 @@ export default function PropertyCard({ property, view = "grid" }: PropertyCardPr
             <h3 className="font-heading text-xl text-navy dark:text-white mb-2">
               {property.title}
             </h3>
-            <p className="font-heading text-2xl text-gold mb-4">{formatPrice(property.price)}</p>
+            <p className="font-heading text-2xl text-gold mb-4">{formatPrice(property.price, property.max_price, property.currency)}</p>
             <div className="flex items-center gap-4 text-sm text-navy/60 dark:text-white/60 mb-4">
               {property.bedrooms > 0 && (
                 <span className="flex items-center gap-1">
@@ -161,7 +161,7 @@ export default function PropertyCard({ property, view = "grid" }: PropertyCardPr
           <h3 className="font-heading text-xl text-navy dark:text-white mb-3">
             {property.title}
           </h3>
-          <p className="font-heading text-2xl text-gold mb-4">{formatPrice(property.price)}</p>
+          <p className="font-heading text-2xl text-gold mb-4">{formatPrice(property.price, property.max_price, property.currency)}</p>
           <div className="flex items-center gap-4 text-sm text-navy/60 dark:text-white/60 mb-6 pb-6 border-b border-gray-100 dark:border-white/5">
             {property.bedrooms > 0 && (
               <span className="flex items-center gap-1">

@@ -92,6 +92,14 @@ class Property(models.Model):
     location = models.CharField(max_length=255)
     city = models.CharField(max_length=100, db_index=True)
     price = models.BigIntegerField(db_index=True)
+    max_price = models.BigIntegerField(blank=True, null=True, db_index=True)
+    CURRENCY_CHOICES = [
+        ("NGN", "NGN"),
+        ("USD", "USD"),
+    ]
+    currency = models.CharField(
+        max_length=3, choices=CURRENCY_CHOICES, default="NGN", db_index=True
+    )
     previous_price = models.BigIntegerField(blank=True, null=True)
     current_price = models.BigIntegerField(blank=True, null=True)
     bedrooms = models.PositiveIntegerField()
@@ -156,6 +164,18 @@ class Property(models.Model):
 
     def __str__(self):
         return self.title
+
+    def clean(self):
+        """Validate price range constraints."""
+        if self.max_price is not None:
+            if not self.price or self.price <= 0:
+                raise ValidationError(
+                    {"max_price": "Maximum Price cannot exist if Price is empty or invalid."}
+                )
+            if self.max_price <= self.price:
+                raise ValidationError(
+                    {"max_price": "Maximum Price must be greater than the Minimum Price."}
+                )
 
     def save(self, *args, **kwargs):
         if not self.slug:

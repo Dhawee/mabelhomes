@@ -113,7 +113,7 @@ export default async function PropertyDetailPage({ params }: Props) {
                   <MapPin size={16} className="text-gold" />
                   {property.location}
                 </div>
-                <p className="font-heading text-3xl text-gold">{formatPriceFull(property.price)}</p>
+                <p className="font-heading text-3xl text-gold">{formatPriceFull(property.price, property.max_price, property.currency)}</p>
               </div>
             </FadeIn>
 
@@ -317,7 +317,7 @@ export default async function PropertyDetailPage({ params }: Props) {
                   </div>
                   <div className="p-5">
                     <h3 className="font-heading text-lg text-navy dark:text-white mb-1">{p.title}</h3>
-                    <p className="text-gold font-heading">{formatPrice(p.price)}</p>
+                    <p className="text-gold font-heading">{formatPrice(p.price, p.max_price, p.currency)}</p>
                   </div>
                 </Link>
               ))}
