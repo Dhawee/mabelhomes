@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+export const dynamic = "force-dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { Bed, Bath, Maximize, MapPin, Calendar, Phone, Mail, ArrowLeft } from "lucide-react";
@@ -12,6 +13,7 @@ import { API_BASE_URL } from "@/config";
 import { Property } from "@/types";
 import BackButton from "@/components/properties/BackButton";
 import SafeImage from "@/components/ui/SafeImage";
+import { fetchHttp1 } from "@/lib/fetch";
 
 const WhatsAppIcon = ({ className }: { className?: string }) => (
   <svg
@@ -31,9 +33,7 @@ interface Props {
 
 async function getProperty(slug: string): Promise<Property | null> {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/properties/${slug}/`, { cache: "no-store" });
-    if (!res.ok) return null;
-    return await res.json();
+    return await fetchHttp1<Property>(`${API_BASE_URL}/api/properties/${slug}/`);
   } catch (err) {
     console.error("Failed to fetch property:", err);
     return null;
@@ -42,9 +42,7 @@ async function getProperty(slug: string): Promise<Property | null> {
 
 async function getSimilarProperties(slug: string): Promise<Property[]> {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/properties/${slug}/similar/`, { cache: "no-store" });
-    if (!res.ok) return [];
-    return await res.json();
+    return await fetchHttp1<Property[]>(`${API_BASE_URL}/api/properties/${slug}/similar/`);
   } catch (err) {
     console.error("Failed to fetch similar properties:", err);
     return [];
@@ -58,18 +56,6 @@ const hasValue = (val: any) => {
   return true;
 };
 
-export async function generateStaticParams() {
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/properties/?page_size=100`);
-    if (!res.ok) return [];
-    const data = await res.json();
-    const list = Array.isArray(data) ? data : (data.results || []);
-    return list.map((p: any) => ({ slug: p.slug }));
-  } catch (err) {
-    console.error("Failed to generate static params:", err);
-    return [];
-  }
-}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;

@@ -17,6 +17,7 @@ import BackButton from "@/components/properties/BackButton";
 import type { Metadata } from "next";
 import { API_BASE_URL } from "@/config";
 import { Service } from "@/types";
+import { fetchHttp1 } from "@/lib/fetch";
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   Home,
@@ -34,9 +35,7 @@ interface Props {
 
 async function getService(slug: string): Promise<Service | null> {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/services/${slug}/`, { next: { revalidate: 3600 } });
-    if (!res.ok) return null;
-    return await res.json();
+    return await fetchHttp1<Service>(`${API_BASE_URL}/api/services/${slug}/`);
   } catch (err) {
     console.error("Failed to fetch service detail:", err);
     return null;
@@ -45,9 +44,7 @@ async function getService(slug: string): Promise<Service | null> {
 
 async function getOtherServices(slug: string): Promise<Service[]> {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/services/`, { next: { revalidate: 3600 } });
-    if (!res.ok) return [];
-    const list = await res.json();
+    const list = await fetchHttp1<Service[]>(`${API_BASE_URL}/api/services/`);
     return list.filter((s: Service) => s.slug !== slug);
   } catch (err) {
     console.error("Failed to fetch other services:", err);
@@ -57,9 +54,7 @@ async function getOtherServices(slug: string): Promise<Service[]> {
 
 export async function generateStaticParams() {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/services/`);
-    if (!res.ok) return [];
-    const list = await res.json();
+    const list = await fetchHttp1<any[]>(`${API_BASE_URL}/api/services/`);
     return list.map((s: any) => ({ slug: s.slug }));
   } catch (err) {
     console.error("Failed to generate services static params:", err);
