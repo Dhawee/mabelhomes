@@ -234,7 +234,12 @@ class PropertySerializer(serializers.ModelSerializer):
         ).data
 
     def get_coordinates(self, obj):
-        return {"lat": float(obj.latitude), "lng": float(obj.longitude)}
+        if obj.latitude is None or obj.longitude is None:
+            return {"lat": 6.5244, "lng": 3.3792}
+        try:
+            return {"lat": float(obj.latitude), "lng": float(obj.longitude)}
+        except (TypeError, ValueError):
+            return {"lat": 6.5244, "lng": 3.3792}
 
     def validate(self, data):
         """Enforce price range constraints at the serializer level."""
@@ -298,6 +303,68 @@ class PropertyListSerializer(serializers.ModelSerializer):
             return _build_url(request, primary.image_upload.url)
         else:
             return primary.image_url
+
+
+class FeaturedPropertySerializer(serializers.ModelSerializer):
+    """
+    Highly optimized serializer returned specifically for homepage featured properties.
+    Includes only fields needed for the homepage cards.
+    """
+    type = serializers.CharField(source="property_type.name", read_only=True)
+    primary_image = serializers.SerializerMethodField()
+    images = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Property
+        fields = [
+            "id",
+            "slug",
+            "title",
+            "price",
+            "max_price",
+            "currency",
+            "bedrooms",
+            "bathrooms",
+            "sqft",
+            "status",
+            "type",
+            "location",
+            "featured",
+            "luxury",
+            "primary_image",
+            "images",
+            "likes_count",
+        ]
+
+    def get_primary_image(self, obj):
+        request = self.context.get("request")
+        images = list(obj.images.all())
+        if not images:
+            return None
+        primary = next((img for img in images if img.is_primary), None) or images[0]
+        if primary.image_optimized:
+            return _build_url(request, primary.image_optimized.url)
+        elif primary.image_upload:
+            return _build_url(request, primary.image_upload.url)
+        else:
+            return primary.image_url
+
+    def get_images(self, obj):
+        request = self.context.get("request")
+        images = list(obj.images.all())
+        images.sort(key=lambda x: (not x.is_primary, x.order or 0, getattr(x, "created_at", None) or x.id or 0))
+        urls = []
+        for img in images:
+            if img.image_optimized:
+                url = _build_url(request, img.image_optimized.url)
+            elif img.image_upload:
+                url = _build_url(request, img.image_upload.url)
+            else:
+                url = img.image_url
+            if url:
+                urls.append(url)
+        return urls
+
 
 
 # ---------------------------------------------------------------------------
@@ -612,7 +679,7 @@ class UserSerializer(serializers.ModelSerializer):
         return [g.name for g in obj.groups.all()]
 
     def get_permissions(self, obj):
-        if obj.is_superuser:
+        if obj.is_superuser or obj.is_staff:
             return ["*"]
         perms = set()
         for p in obj.user_permissions.all():

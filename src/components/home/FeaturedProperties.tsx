@@ -121,8 +121,35 @@ export default function FeaturedProperties() {
 
   if (loading) {
     return (
-      <section className="py-20 text-center text-navy/60 dark:text-white/60">
-        Loading featured properties...
+      <section id="properties" className="py-12 md:py-16 px-6 md:px-12 bg-white dark:bg-navy border-b border-gray-100 dark:border-white/5">
+        <div className="max-w-7xl mx-auto w-full pt-2">
+          {/* Header skeleton */}
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+            <div>
+              <div className="h-3 w-32 bg-gray-200 dark:bg-white/10 rounded-full mb-3 animate-pulse" />
+              <div className="h-8 w-64 bg-gray-200 dark:bg-white/10 rounded-lg animate-pulse" />
+            </div>
+          </div>
+          {/* Card skeletons */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="luxury-card overflow-hidden animate-pulse">
+                <div className="aspect-[4/3] bg-gray-200 dark:bg-white/10" />
+                <div className="p-5 space-y-3">
+                  <div className="h-3 w-2/3 bg-gray-200 dark:bg-white/10 rounded" />
+                  <div className="h-5 w-full bg-gray-200 dark:bg-white/10 rounded" />
+                  <div className="h-6 w-1/2 bg-gray-200 dark:bg-white/10 rounded" />
+                  <div className="flex gap-4 pt-2">
+                    <div className="h-3 w-16 bg-gray-200 dark:bg-white/10 rounded" />
+                    <div className="h-3 w-16 bg-gray-200 dark:bg-white/10 rounded" />
+                    <div className="h-3 w-20 bg-gray-200 dark:bg-white/10 rounded" />
+                  </div>
+                  <div className="h-10 w-full bg-gray-200 dark:bg-white/10 rounded-lg mt-2" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
     );
   }
@@ -207,6 +234,7 @@ export default function FeaturedProperties() {
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       propertySlug={property.slug}
                       imageId="primary_featured"
+                      priority={idx < 3}
                     />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-navy/10 to-gold/10 flex items-center justify-center">

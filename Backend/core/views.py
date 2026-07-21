@@ -5,7 +5,7 @@ import os
 from django.contrib.auth.models import User, Group, Permission
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Q, Sum
+from django.db.models import Q, Sum, Count
 from django.utils import timezone
 from django.utils.text import slugify
 from rest_framework import permissions, status, viewsets
@@ -24,7 +24,7 @@ from core.serializers import (AdminNotificationSerializer,
                               AuditLogSerializer, ContactMessageSerializer,
                               DashboardStatsSerializer, EnquiryReplySerializer,
                               MediaAssetSerializer, PropertyEnquirySerializer,
-                              PropertySerializer, PropertyListSerializer,
+                              PropertySerializer, PropertyListSerializer, FeaturedPropertySerializer,
                               PropertyTypeSerializer, PropertyVideoSerializer,
                               ServiceEnquirySerializer, ServiceTypeSerializer,
                               UserSerializer, GroupSerializer, PermissionSerializer,
@@ -74,7 +74,10 @@ class PropertyViewSet(viewsets.ModelViewSet):
     lookup_field = "slug"
 
     def get_serializer_class(self):
-        if self.action == "list":
+        if self.action in ["list", "similar"]:
+            featured = self.request.query_params.get("featured")
+            if featured and featured.lower() in ("true", "1", "yes"):
+                return FeaturedPropertySerializer
             return PropertyListSerializer
         return PropertySerializer
 
@@ -136,6 +139,26 @@ class PropertyViewSet(viewsets.ModelViewSet):
         )
 
     def create(self, request, *args, **kwargs):
+        # Idempotency check: check if a property with identical details was created in the last 2 minutes
+        title = request.data.get("title")
+        description = request.data.get("description")
+        price = request.data.get("price")
+        location = request.data.get("location")
+
+        if title and description:
+            two_minutes_ago = timezone.now() - timezone.timedelta(minutes=2)
+            duplicate_prop = Property.objects.filter(
+                title=title,
+                description=description,
+                price=price,
+                location=location,
+                created_at__gte=two_minutes_ago
+            ).first()
+            if duplicate_prop:
+                logger.info(f"Duplicate property creation request detected. Returning existing property id={duplicate_prop.id}")
+                serializer = self.get_serializer(duplicate_prop)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+
         serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid():
             logger.error(f"Property creation validation errors: {serializer.errors}")
@@ -1326,16 +1349,24 @@ class DashboardStatsView(APIView):
     permission_classes = [permissions.IsAdminUser]
 
     def get(self, request):
-        total_likes = Property.objects.aggregate(total=Sum("likes_count"))["total"] or 0
+        prop_agg = Property.objects.filter(is_deleted=False).aggregate(
+            total_properties=Count("id"),
+            visible_properties=Count("id", filter=Q(is_visible=True)),
+            featured_properties=Count("id", filter=Q(featured=True)),
+            luxury_properties=Count("id", filter=Q(luxury=True)),
+            hidden_properties=Count("id", filter=Q(is_visible=False)),
+            sold_properties=Count("id", filter=Q(status="Sold")),
+            total_likes=Sum("likes_count"),
+        )
 
         stats = {
-            "total_properties": Property.objects.filter(is_deleted=False).count(),
-            "visible_properties": Property.objects.filter(is_deleted=False, is_visible=True).count(),
-            "featured_properties": Property.objects.filter(is_deleted=False, featured=True).count(),
-            "luxury_properties": Property.objects.filter(is_deleted=False, luxury=True).count(),
-            "hidden_properties": Property.objects.filter(is_deleted=False, is_visible=False).count(),
-            "sold_properties": Property.objects.filter(is_deleted=False, status="Sold").count(),
-            "total_likes": total_likes,
+            "total_properties": prop_agg["total_properties"] or 0,
+            "visible_properties": prop_agg["visible_properties"] or 0,
+            "featured_properties": prop_agg["featured_properties"] or 0,
+            "luxury_properties": prop_agg["luxury_properties"] or 0,
+            "hidden_properties": prop_agg["hidden_properties"] or 0,
+            "sold_properties": prop_agg["sold_properties"] or 0,
+            "total_likes": prop_agg["total_likes"] or 0,
             "property_enquiries": PropertyEnquiry.objects.filter(is_deleted=False).count(),
             "service_enquiries": ServiceEnquiry.objects.filter(is_deleted=False).count(),
             "contact_messages": ContactMessage.objects.filter(is_deleted=False).count(),

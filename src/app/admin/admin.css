@@ -1,0 +1,444 @@
+/* ============================================
+   Mabel Homes Admin Portal — CSS
+   Imported only by src/app/admin/layout.tsx
+   ============================================ */
+
+:root {
+  --color-navy: #0f2044;
+  --color-navy-light: #1a3a6b;
+  --color-gold: #c9a84c;
+  --color-gold-light: #dfc168;
+  --sidebar-width: 240px;
+  --sidebar-collapsed: 64px;
+  --topbar-height: 60px;
+  --bg-page: #f8f9fb;
+  --bg-card: #ffffff;
+  --border: #e5e7eb;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
+}
+
+/* ============================================
+   Base Reset
+   ============================================ */
+.admin-layout *,
+.admin-layout *::before,
+.admin-layout *::after {
+  box-sizing: border-box;
+}
+
+/* ============================================
+   Layout Shell
+   ============================================ */
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+.admin-sidebar {
+  width: var(--sidebar-width);
+  background: var(--color-navy);
+  min-height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.25s ease, transform 0.25s ease;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.admin-main {
+  margin-left: var(--sidebar-width);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--bg-page);
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.admin-topbar {
+  height: var(--topbar-height);
+  background: white;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.admin-content {
+  flex: 1;
+  padding: 20px;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+/* ============================================
+   Stat Cards
+   ============================================ */
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.2s, transform 0.2s;
+  min-width: 0;
+}
+
+.stat-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+/* ============================================
+   Data Tables — Always scrollable
+   ============================================ */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.data-table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.data-table th {
+  background: #f9fafb;
+  border-bottom: 2px solid var(--border);
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid #f3f4f6;
+  vertical-align: middle;
+}
+
+.data-table tr:hover td {
+  background: #fafbff;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Truncate long text cells */
+.data-table .cell-truncate {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ============================================
+   Status Badges
+   ============================================ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.8;
+  white-space: nowrap;
+}
+
+.badge-success { background: #d1fae5; color: #065f46; }
+.badge-warning { background: #fef3c7; color: #92400e; }
+.badge-error   { background: #fee2e2; color: #991b1b; }
+.badge-info    { background: #dbeafe; color: #1e40af; }
+.badge-gray    { background: #f3f4f6; color: #374151; }
+.badge-gold    { background: #fef3c7; color: #92400e; }
+
+/* ============================================
+   Form Elements
+   ============================================ */
+.form-input {
+  width: 100%;
+  padding: 9px 13px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  color: var(--text-primary);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+  min-width: 0;
+}
+
+.form-input:focus {
+  border-color: var(--color-navy-light);
+  box-shadow: 0 0 0 3px rgba(26, 58, 107, 0.12);
+}
+
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ============================================
+   Buttons
+   ============================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-primary {
+  background: var(--color-navy);
+  color: white;
+}
+.btn-primary:hover { background: var(--color-navy-light); }
+
+.btn-gold {
+  background: var(--color-gold);
+  color: white;
+}
+.btn-gold:hover { background: var(--color-gold-light); }
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+.btn-outline:hover { border-color: var(--color-navy-light); color: var(--text-primary); }
+
+.btn-danger {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.btn-danger:hover { background: #fca5a5; }
+
+/* ============================================
+   Cards
+   ============================================ */
+.card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.card-body {
+  padding: 18px;
+}
+
+/* ============================================
+   Sidebar Nav Items
+   ============================================ */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 0;
+  transition: all 0.15s;
+  text-decoration: none;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: white;
+}
+
+.nav-item.active {
+  background: rgba(201, 168, 76, 0.15);
+  color: #fbbf24;
+  border-left-color: #c9a84c;
+}
+
+/* ============================================
+   Spinner
+   ============================================ */
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(0, 0, 0, 0.08);
+  border-top-color: var(--color-navy);
+  border-radius: 50%;
+  animation: admin-spin 0.7s linear infinite;
+}
+
+@keyframes admin-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   Fade In Animation
+   ============================================ */
+@keyframes admin-fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: admin-fadeIn 0.3s ease both;
+}
+
+/* ============================================
+   Page Header utility
+   ============================================ */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.page-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ============================================
+   Filter Bar
+   ============================================ */
+.filter-bar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-bar .form-input {
+  min-width: 140px;
+  flex: 1;
+}
+
+/* ============================================
+   Responsive Breakpoints
+   ============================================ */
+
+/* Large desktop — comfortable */
+@media (min-width: 1440px) {
+  .admin-content {
+    padding: 24px;
+  }
+  .admin-topbar {
+    padding: 0 24px;
+  }
+}
+
+/* Standard desktop (1366×768, 1280×800) — default */
+@media (max-width: 1365px) {
+  :root {
+    --sidebar-width: 220px;
+  }
+  .admin-content {
+    padding: 16px;
+  }
+  .stat-card {
+    padding: 14px 16px;
+  }
+}
+
+/* Tablet and small desktop */
+@media (max-width: 1024px) {
+  :root {
+    --sidebar-width: 240px;
+  }
+  .admin-sidebar {
+    transform: translateX(-100%);
+    width: var(--sidebar-width) !important;
+    box-shadow: none;
+  }
+  .admin-sidebar.open {
+    transform: translateX(0);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.18);
+  }
+  .admin-main {
+    margin-left: 0 !important;
+  }
+  .admin-content {
+    padding: 14px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .admin-content {
+    padding: 12px;
+  }
+  .admin-topbar {
+    padding: 0 12px;
+  }
+  .card-header {
+    padding: 12px 14px;
+  }
+  .card-body {
+    padding: 14px;
+  }
+  .data-table th,
+  .data-table td {
+    padding: 8px 10px;
+  }
+  .btn {
+    padding: 7px 12px;
+    font-size: 12px;
+  }
+}

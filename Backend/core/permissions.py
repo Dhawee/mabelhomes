@@ -27,14 +27,10 @@ class DjangoModelPermissionsOrStaffExplicit(permissions.DjangoModelPermissions):
         if not request.user or not request.user.is_authenticated:
             return False
 
-        if request.user.is_superuser:
+        if request.user.is_superuser or request.user.is_staff:
             return True
 
-        if not request.user.is_staff:
-            return False
-
-        # Fallback to standard DjangoModelPermissions check
-        return super().has_permission(request, view)
+        return False
 
 
 class IsAdminUserOrReadOnly(permissions.BasePermission):

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, MapPin, Home, DollarSign, Bed, Filter } from "lucide-react";
+import { Search, MapPin, Home, Bed, Filter } from "lucide-react";
 import Link from "next/link";
 import FadeIn from "@/components/ui/FadeIn";
 
@@ -82,7 +82,7 @@ export default function PropertySearch() {
                 Price Range
               </label>
               <div className="relative">
-                <DollarSign size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-navy/40 dark:text-white/40" />
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-navy/40 dark:text-white/40 text-sm font-semibold">₦</span>
                 <select
                   value={priceRange}
                   onChange={(e) => setPriceRange(e.target.value)}
@@ -143,7 +143,7 @@ export default function PropertySearch() {
               className="btn-gold text-center !py-3.5 flex items-center justify-center gap-2 hover:bg-gold-light transition-all shadow-md active:scale-[0.98] w-full"
             >
               <Search size={16} />
-              <span>Search Properties</span>
+              <span>Search</span>
             </Link>
           </div>
         </div>

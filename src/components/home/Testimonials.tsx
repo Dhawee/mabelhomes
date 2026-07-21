@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import { Star, ChevronLeft, ChevronRight, Quote } from "lucide-react";
 import { TESTIMONIALS } from "@/data/site";
 import FadeIn from "@/components/ui/FadeIn";
@@ -46,14 +45,10 @@ export default function Testimonials() {
               </p>
 
               <div className="flex items-center justify-center gap-4">
-                <div className="w-14 h-14 rounded-full overflow-hidden">
-                  <Image
-                    src={testimonial.image}
-                    alt={testimonial.name}
-                    width={56}
-                    height={56}
-                    className="object-cover w-full h-full"
-                  />
+                <div className="w-14 h-14 rounded-full bg-gold/20 border border-gold/30 flex items-center justify-center shrink-0">
+                  <span className="text-gold font-bold text-lg">
+                    {testimonial.name.charAt(0)}
+                  </span>
                 </div>
                 <div>
                   <p className="text-white font-semibold">{testimonial.name}</p>

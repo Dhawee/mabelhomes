@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { Star } from "lucide-react";
 import { TESTIMONIALS, SITE } from "@/data/site";
 import FadeIn from "@/components/ui/FadeIn";
@@ -38,8 +37,10 @@ export default function TestimonialsPage() {
                   &ldquo;{t.review}&rdquo;
                 </p>
                 <div className="flex items-center gap-4 pt-6 border-t border-gray-100 dark:border-white/5">
-                  <div className="w-12 h-12 rounded-full overflow-hidden">
-                    <Image src={t.image} alt={t.name} width={48} height={48} className="object-cover" />
+                  <div className="w-12 h-12 rounded-full bg-gold/20 border border-gold/30 flex items-center justify-center shrink-0">
+                    <span className="text-gold font-bold text-base">
+                      {t.name.charAt(0)}
+                    </span>
                   </div>
                   <div>
                     <p className="font-semibold text-navy dark:text-white">{t.name}</p>

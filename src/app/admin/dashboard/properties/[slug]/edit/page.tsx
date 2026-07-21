@@ -1,0 +1,78 @@
+"use client";
+
+import { useEffect, useState, use, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { api } from "@/lib/admin/api";
+import type { Property } from "@/types/admin";
+import PropertyForm from "@/components/admin/PropertyForm";
+
+interface Props {
+  params: Promise<{ slug: string }>;
+}
+
+export default function EditPropertyPage({ params }: Props) {
+  const { slug } = use(params);
+  const router = useRouter();
+  const [property, setProperty] = useState<Property | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    api.get<Property>(`/api/properties/${slug}/`)
+      .then((data) => {
+        setProperty(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Failed to load property:", err);
+        setError("Unable to load property details. Please try again.");
+        setLoading(false);
+      });
+  }, [slug]);
+
+  const savingRef = useRef(false);
+
+  const handleSubmit = async (formData: any, tempImages: any[] = [], tempVideos: any[] = []) => {
+    if (savingRef.current) return;
+    savingRef.current = true;
+    setSaving(true);
+    try {
+      await api.patch(`/api/properties/${slug}/`, formData);
+      alert("Property updated successfully!");
+      router.push(`/admin/dashboard/properties/${slug}`);
+    } catch (err: any) {
+      console.error("Failed to update property:", err);
+      alert("Unable to save property. Please check that all required fields are filled correctly and try again.");
+      throw err;
+    } finally {
+      setSaving(false);
+      savingRef.current = false;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="spinner" />
+      </div>
+    );
+  }
+
+  if (error || !property) {
+    return (
+      <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-6 text-sm">
+        ⚠ {error || "Property not found."}
+      </div>
+    );
+  }
+
+  return (
+    <PropertyForm
+      title={`Edit Property: ${property.title}`}
+      initialData={property}
+      onSubmit={handleSubmit}
+      loading={saving}
+    />
+  );
+}

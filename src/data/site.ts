@@ -420,42 +420,38 @@ export const PROPERTIES: Property[] = [
 export const TESTIMONIALS: Testimonial[] = [
   {
     id: "1",
-    name: "Adewale & Funke Okonkwo",
-    location: "Lekki, Lagos",
+    name: "Mr. Raymond Adedayo",
+    location: "Lagos",
     rating: 5,
     review:
       "Mabel Homes made our first home purchase seamless. Their knowledge of the Lagos market and attention to detail gave us complete confidence throughout the process.",
-    image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&q=80",
     service: "Home Purchase",
   },
   {
     id: "2",
-    name: "Chidi Eze",
+    name: "Mrs. Oluchi Chioma",
     location: "Victoria Island, Lagos",
     rating: 5,
     review:
       "As an investor, I needed someone who understood ROI and market trends. Mabel Homes delivered exceptional advisory services and helped me acquire three premium properties.",
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&q=80",
     service: "Investment Advisory",
   },
   {
     id: "3",
-    name: "Sarah Mitchell",
+    name: "Mr. Oluwadunsin Peters",
     location: "Ikoyi, Lagos",
     rating: 5,
     review:
       "Selling our property was handled with utmost professionalism. The marketing strategy and negotiation skills resulted in a sale above our asking price.",
-    image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&q=80",
     service: "Property Sales",
   },
   {
     id: "4",
-    name: "Emeka & Ngozi Adeyemi",
+    name: "Mr. & Mrs. Olorunda Adeshina",
     location: "Abuja",
     rating: 5,
     review:
       "From documentation to handover, every step was transparent and well-managed. We highly recommend Mabel Homes for anyone seeking trusted real estate services.",
-    image: "https://images.unsplash.com/photo-1519081908949-4d7d0a747a64?w=200&q=80",
     service: "Full Service",
   },
 ];

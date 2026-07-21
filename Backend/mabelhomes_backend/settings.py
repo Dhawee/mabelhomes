@@ -183,9 +183,12 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     "http://localhost:3001",
     "http://127.0.0.1:3001",
+    "http://localhost:3002",
+    "http://127.0.0.1:3002",
     "https://www.mabelhomes.org",
     "https://mabelhomes.org",
     "https://admin.mabelhomes.org",
+    "https://api.mabelhomes.org",
 ]
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://.*\.onrender\.com$",
@@ -197,7 +200,7 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
 ]
 CSRF_TRUSTED_ORIGINS = os.getenv(
     "CSRF_TRUSTED_ORIGINS",
-    "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001,https://*.onrender.com",
+    "https://www.mabelhomes.org,https://mabelhomes.org,https://admin.mabelhomes.org,https://api.mabelhomes.org,https://*.onrender.com,http://localhost:3000,http://localhost:3001,http://localhost:3002",
 ).split(",")
 
 # Django REST Framework Settings

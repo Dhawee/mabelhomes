@@ -261,7 +261,7 @@ export interface Testimonial {
   location: string;
   rating: number;
   review: string;
-  image: string;
+  image?: string;
   service: string;
 }
 

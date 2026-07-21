@@ -1,6 +1,6 @@
-from django.db.models import Q
+from django.db.models import Q, Prefetch
 
-from core.models import Property
+from core.models import Property, PropertyImage, PropertyVideo
 
 
 def search_and_filter_properties(
@@ -36,7 +36,7 @@ def search_and_filter_properties(
     queryset = (
         Property.objects.filter(base_filter)
         .select_related("property_type")
-        .prefetch_related("images")
+        .prefetch_related(Prefetch("images", queryset=PropertyImage.objects.order_by("-is_primary", "order")))
     )
     if prefetch_videos:
         queryset = queryset.prefetch_related("videos")

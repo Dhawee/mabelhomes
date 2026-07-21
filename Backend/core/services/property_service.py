@@ -30,10 +30,15 @@ def get_similar_properties(property_instance, limit=3):
         score = 0
 
         # 1. Location Matching
-        if candidate.city.lower() == property_instance.city.lower():
+        cand_city = (candidate.city or "").lower()
+        orig_city = (property_instance.city or "").lower()
+        if cand_city and orig_city and cand_city == orig_city:
             score += 5
-        if candidate.location.lower() == property_instance.location.lower():
-            score += 2  # extra weight if exact address matching
+
+        cand_loc = (candidate.location or "").lower()
+        orig_loc = (property_instance.location or "").lower()
+        if cand_loc and orig_loc and cand_loc == orig_loc:
+            score += 2
 
         # 2. Type Matching
         if candidate.property_type_id == property_instance.property_type_id:
