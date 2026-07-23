@@ -13,8 +13,10 @@ export default function PropertiesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [listingTypeFilter, setListingTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("");
   const [visibilityFilter, setVisibilityFilter] = useState("all"); // 'all', 'visible', 'hidden', 'featured'
+  const [ordering, setOrdering] = useState("-created_at");
   const [page, setPage] = useState(1);
 
   const load = useCallback(async () => {
@@ -24,8 +26,10 @@ export default function PropertiesPage() {
       const params = new URLSearchParams({
         page: String(page),
         page_size: "20",
+        ordering: ordering,
       });
       if (search) params.set("search", search);
+      if (listingTypeFilter !== "all") params.set("listing_type", listingTypeFilter);
       if (statusFilter) params.set("status", statusFilter);
 
       if (visibilityFilter === "visible") {
@@ -47,7 +51,7 @@ export default function PropertiesPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, statusFilter, visibilityFilter]);
+  }, [page, search, listingTypeFilter, statusFilter, visibilityFilter, ordering]);
 
   useEffect(() => {
     load();
@@ -117,6 +121,17 @@ export default function PropertiesPage() {
             />
           </div>
 
+          {/* Listing Type filter */}
+          <select
+            value={listingTypeFilter}
+            onChange={(e) => { setListingTypeFilter(e.target.value); setPage(1); }}
+            className="form-input w-auto font-medium"
+          >
+            <option value="all">All Listing Types</option>
+            <option value="property">🏡 Properties for Sale</option>
+            <option value="shortlet">🔑 Shortlets</option>
+          </select>
+
           {/* Status filter */}
           <select
             value={statusFilter}
@@ -142,6 +157,19 @@ export default function PropertiesPage() {
             <option value="hidden">Hidden Only</option>
             <option value="featured">Featured Only</option>
             <option value="deleted">Deleted Only</option>
+          </select>
+
+          {/* Sort Order filter */}
+          <select
+            value={ordering}
+            onChange={(e) => { setOrdering(e.target.value); setPage(1); }}
+            className="form-input w-auto"
+          >
+            <option value="-created_at">Newest First</option>
+            <option value="created_at">Oldest First</option>
+            <option value="price">Price: Low to High</option>
+            <option value="-price">Price: High to Low</option>
+            <option value="title">Title: A-Z</option>
           </select>
         </div>
       </div>
@@ -194,8 +222,17 @@ export default function PropertiesPage() {
                             )}
                           </div>
                           <div className="min-w-0">
-                            <div className="font-medium text-gray-900 cell-truncate text-sm">
-                              {prop.title}
+                            <div className="font-medium text-gray-900 cell-truncate text-sm flex items-center gap-1.5">
+                              <span>{prop.title}</span>
+                              {prop.listing_type === "shortlet" ? (
+                                <span className="px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-800 rounded border border-amber-300">
+                                  Shortlet
+                                </span>
+                              ) : (
+                                <span className="px-1.5 py-0.5 text-[10px] font-bold bg-slate-100 text-slate-700 rounded border border-slate-300">
+                                  Property
+                                </span>
+                              )}
                             </div>
                             <div className="text-xs text-gray-400 truncate">{prop.type}</div>
                           </div>

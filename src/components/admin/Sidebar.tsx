@@ -15,6 +15,7 @@ import {
   Phone,
   Layers,
   Settings,
+  Calendar,
 } from "lucide-react";
 import { logout } from "@/lib/admin/auth";
 
@@ -36,6 +37,7 @@ const navSections = [
     title: "Enquiries",
     items: [
       { label: "Property Enquiries", href: "/admin/dashboard/property-enquiries", icon: MessageSquare },
+      { label: "Shortlet Enquiries", href: "/admin/dashboard/shortlet-enquiries", icon: Calendar },
       { label: "Service Enquiries", href: "/admin/dashboard/service-enquiries", icon: Building2 },
       { label: "Contact Messages", href: "/admin/dashboard/contact-messages", icon: Phone },
     ],

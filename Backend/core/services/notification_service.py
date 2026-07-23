@@ -75,22 +75,16 @@ def notify_admin(title: str, message: str, notification_type: str = "system") ->
 
     def _send():
         try:
-            send_mail(
+            from core.services.email_service import send_resend_email
+            send_resend_email(
+                to=recipient_emails,
                 subject=f"[Mabel Homes Admin] {title}",
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=recipient_emails,
-                fail_silently=False,
+                text_body=message,
+                html_body=f"<div style='font-family:sans-serif;'><h2>[Mabel Homes Admin] {title}</h2><p>{message}</p></div>",
             )
-            if is_console:
-                logger.info(f"Admin notification printed to console for: {recipient_emails}: {title!r}")
-            else:
-                logger.info(
-                    f"Admin email alert sent successfully to {recipient_emails} via {backend_info}"
-                )
         except Exception as exc:
             logger.error(
-                f"Failed to send admin email notification via {backend_info}: {exc}",
+                f"Failed to send admin email notification via Resend: {exc}",
                 exc_info=True,
             )
 

@@ -33,6 +33,7 @@ export interface Property {
   bathrooms: number;
   sqft: number;
   status: "For Sale" | "For Rent" | "Sold" | "Under Offer" | "Shortlet";
+  listing_type?: "property" | "shortlet";
   type: string;
   type_slug?: string;
   featured: boolean;

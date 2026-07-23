@@ -111,13 +111,14 @@
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  border-radius: 8px;
 }
 
 .data-table {
   width: 100%;
-  min-width: 560px;
   border-collapse: collapse;
   font-size: 13px;
+  table-layout: auto;
 }
 
 .data-table th {
@@ -137,6 +138,8 @@
   padding: 10px 14px;
   border-bottom: 1px solid #f3f4f6;
   vertical-align: middle;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .data-table tr:hover td {
@@ -149,7 +152,21 @@
 
 /* Truncate long text cells */
 .data-table .cell-truncate {
-  max-width: 180px;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.data-table .cell-truncate-sm {
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.data-table .cell-truncate-lg {
+  max-width: 320px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

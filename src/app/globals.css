@@ -32,7 +32,7 @@
   }
 
   .luxury-card {
-    @apply bg-white dark:bg-navy/50 rounded-2xl shadow-luxury border border-gray-100/50 dark:border-white/5 overflow-hidden transition-all duration-500;
+    @apply bg-white dark:bg-navy/50 rounded-xl shadow-luxury border border-gray-100/50 dark:border-white/5 overflow-hidden transition-all duration-500;
   }
 
   .glass-nav {
@@ -40,15 +40,15 @@
   }
 
   .btn-gold {
-    @apply inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-gold text-white font-semibold rounded-full transition-all duration-300 hover:bg-gold-light hover:shadow-gold hover:scale-[1.02] active:scale-[0.98];
+    @apply inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-gold text-white font-semibold rounded-xl transition-all duration-300 hover:bg-gold-light hover:shadow-gold hover:scale-[1.02] active:scale-[0.98];
   }
 
   .btn-outline {
-    @apply inline-flex items-center justify-center gap-2 px-8 py-3.5 border-2 border-navy dark:border-white text-navy dark:text-white font-semibold rounded-full transition-all duration-300 hover:bg-navy hover:text-white dark:hover:bg-white dark:hover:text-navy;
+    @apply inline-flex items-center justify-center gap-2 px-8 py-3.5 border-2 border-navy dark:border-white text-navy dark:text-white font-semibold rounded-xl transition-all duration-300 hover:bg-navy hover:text-white dark:hover:bg-white dark:hover:text-navy;
   }
 
   .btn-outline-gold {
-    @apply inline-flex items-center justify-center gap-2 px-8 py-3.5 border-2 border-gold text-gold font-semibold rounded-full transition-all duration-300 hover:bg-gold hover:text-white;
+    @apply inline-flex items-center justify-center gap-2 px-8 py-3.5 border-2 border-gold text-gold font-semibold rounded-xl transition-all duration-300 hover:bg-gold hover:text-white;
   }
 }
 

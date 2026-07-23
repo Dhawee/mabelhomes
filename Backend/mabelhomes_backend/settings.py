@@ -272,46 +272,15 @@ CACHES = {
 MABEL_CACHE_TTL = int(os.getenv("CACHE_TTL", "3600"))
 
 # ---------------------------------------------------------------------------
-# Email / SMTP Configuration
+# Resend Email Configuration
 # ---------------------------------------------------------------------------
-_email_host_user = get_env_stripped("EMAIL_HOST_USER", "")
-_email_host_password = get_env_stripped("EMAIL_HOST_PASSWORD", "")
-
-EMAIL_BACKEND = get_env_stripped("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
-EMAIL_HOST = get_env_stripped("EMAIL_HOST", "smtp.gmail.com")
-EMAIL_PORT = int(get_env_stripped("EMAIL_PORT", "587"))
-EMAIL_USE_SSL = get_env_stripped("EMAIL_USE_SSL", "False").lower() in ("true", "1", "yes")
-_default_tls = "False" if EMAIL_USE_SSL else "True"
-EMAIL_USE_TLS = get_env_stripped("EMAIL_USE_TLS", _default_tls).lower() in ("true", "1", "yes")
-EMAIL_HOST_USER = _email_host_user
-EMAIL_HOST_PASSWORD = _email_host_password
-DEFAULT_FROM_EMAIL = get_env_stripped("DEFAULT_FROM_EMAIL", "olajumoke@mabelhomes.org")
-SERVER_EMAIL = get_env_stripped("SERVER_EMAIL", "olajumoke@mabelhomes.org")
-ADMIN_EMAIL_FROM = get_env_stripped("ADMIN_EMAIL_FROM", "olajumoke@mabelhomes.org")
-
-# If SMTP details are empty in local development, fallback to console email backend
-if not _email_host_user or not _email_host_password:
-    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-    _EMAIL_BACKEND_REASON = "EMAIL_HOST_USER or EMAIL_HOST_PASSWORD not set in .env"
-else:
-    EMAIL_BACKEND = os.getenv(
-        "EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend"
-    )
-    _EMAIL_BACKEND_REASON = "SMTP credentials configured"
-
-# Allow disabling email notifications via environment variable
-if os.getenv("DISABLE_EMAIL_NOTIFICATIONS", "False").lower() in ("true", "1", "yes"):
-    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-    _EMAIL_BACKEND_REASON = "Disabled via DISABLE_EMAIL_NOTIFICATIONS"
-
-EMAIL_TIMEOUT = 5  # SMTP connection/read timeout in seconds to prevent blocking
-
-# Expose which backend is active and why — used by notification_service for logging
-EMAIL_BACKEND_IS_CONSOLE = EMAIL_BACKEND == "django.core.mail.backends.console.EmailBackend"
-EMAIL_BACKEND_REASON = _EMAIL_BACKEND_REASON
-
-# Custom Mabel Homes Settings
+RESEND_API_KEY = get_env_stripped("RESEND_API_KEY", "")
+FROM_EMAIL = get_env_stripped("FROM_EMAIL", get_env_stripped("DEFAULT_FROM_EMAIL", "olajumoke@mabelhomes.org"))
 ADMIN_EMAIL = get_env_stripped("ADMIN_EMAIL", "olajumoke@mabelhomes.org")
+DEFAULT_FROM_EMAIL = FROM_EMAIL
+SERVER_EMAIL = FROM_EMAIL
+ADMIN_EMAIL_FROM = FROM_EMAIL
+
 
 # Image Processing Configuration
 MABEL_MAX_UPLOAD_SIZE = int(os.getenv("MAX_UPLOAD_SIZE", str(5 * 1024 * 1024)))  # 5MB

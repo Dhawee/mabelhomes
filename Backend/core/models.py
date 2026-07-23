@@ -111,6 +111,16 @@ class Property(models.Model):
     property_type = models.ForeignKey(
         PropertyType, on_delete=models.PROTECT, related_name="properties"
     )
+    LISTING_TYPE_CHOICES = [
+        ("property", "Property"),
+        ("shortlet", "Shortlet"),
+    ]
+    listing_type = models.CharField(
+        max_length=20,
+        choices=LISTING_TYPE_CHOICES,
+        default="property",
+        db_index=True,
+    )
     featured = models.BooleanField(default=False)
     luxury = models.BooleanField(default=False)
     description = models.TextField()
@@ -178,6 +188,8 @@ class Property(models.Model):
                 )
 
     def save(self, *args, **kwargs):
+        if self.status and str(self.status).strip().lower() == "shortlet":
+            self.listing_type = "shortlet"
         if not self.slug:
             base_slug = slugify(self.title)
             slug = base_slug
@@ -542,12 +554,26 @@ class PropertyEnquiry(AbstractEnquiry):
     property_title = models.CharField(
         max_length=255
     )  # Historical copy in case Property gets deleted/modified
+    check_in_date = models.DateField(blank=True, null=True)
+    check_out_date = models.DateField(blank=True, null=True)
+    guests = models.PositiveIntegerField(blank=True, null=True)
+    listing_type = models.CharField(
+        max_length=20,
+        choices=[("property", "Property"), ("shortlet", "Shortlet")],
+        default="property",
+        db_index=True,
+    )
 
     class Meta(AbstractEnquiry.Meta):
         verbose_name_plural = "Property Enquiries"
 
     def __str__(self):
         return f"Enquiry from {self.name} on {self.property_title}"
+
+    def save(self, *args, **kwargs):
+        if self.property and self.property.listing_type == "shortlet":
+            self.listing_type = "shortlet"
+        super().save(*args, **kwargs)
 
 
 # ---------------------------------------------------------------------------

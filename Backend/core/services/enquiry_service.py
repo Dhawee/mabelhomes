@@ -9,7 +9,14 @@ from django.utils import timezone
 
 from core.models import (ContactMessage, EnquiryReply, Property,
                          PropertyEnquiry, ServiceEnquiry, ServiceType)
-from core.services.notification_service import send_reply_email
+from core.services.email_service import (
+    send_contact_notification,
+    send_property_enquiry_notification,
+    send_reply_email as send_resend_reply_email,
+    send_service_enquiry_notification,
+    send_shortlet_enquiry_notification,
+)
+from core.services.notification_service import notify_admin
 
 logger = logging.getLogger("core")
 
@@ -40,13 +47,22 @@ def validate_enquiry_payload(name, email, phone, message, min_message_length=5):
 
 
 # ---------------------------------------------------------------------------
-# Property Enquiries
+# Property & Shortlet Enquiries
 # ---------------------------------------------------------------------------
 
 @transaction.atomic
-def create_property_enquiry(property_id, name, email, phone, message):
+def create_property_enquiry(
+    property_id,
+    name,
+    email,
+    phone,
+    message,
+    check_in_date=None,
+    check_out_date=None,
+    guests=None,
+):
     """
-    Validates and creates a property enquiry atomically.
+    Validates and creates a property or shortlet enquiry atomically.
     Includes duplicate spam prevention checks.
     """
     validate_enquiry_payload(name, email, phone, message)
@@ -73,6 +89,8 @@ def create_property_enquiry(property_id, name, email, phone, message):
             "You have already submitted this enquiry recently. Please wait a few minutes."
         )
 
+    listing_type = getattr(prop, "listing_type", "property")
+
     enquiry = PropertyEnquiry.objects.create(
         property=prop,
         property_title=prop.title,
@@ -80,11 +98,33 @@ def create_property_enquiry(property_id, name, email, phone, message):
         email=email.strip(),
         phone=phone.strip(),
         message=message.strip(),
+        check_in_date=check_in_date,
+        check_out_date=check_out_date,
+        guests=guests,
+        listing_type=listing_type,
     )
 
     logger.info(
-        f"PropertyEnquiry #{enquiry.id} created: {name!r} enquiring about {prop.title!r}"
+        f"PropertyEnquiry #{enquiry.id} [{listing_type}] created: {name!r} enquiring about {prop.title!r}"
     )
+
+    # 1. Trigger in-app notification
+    notif_title = f"New {'Shortlet' if listing_type == 'shortlet' else 'Property'} Enquiry: {prop.title}"
+    notify_admin(
+        title=notif_title,
+        message=f"From {name} ({email}, {phone}): {message}",
+        notification_type="enquiry",
+    )
+
+    # 2. Trigger Resend email notification asynchronously/safely
+    try:
+        if listing_type == "shortlet":
+            send_shortlet_enquiry_notification(enquiry)
+        else:
+            send_property_enquiry_notification(enquiry)
+    except Exception as exc:
+        logger.error(f"Failed to dispatch Resend enquiry email: {exc}", exc_info=True)
+
     return enquiry
 
 
@@ -140,6 +180,18 @@ def create_service_enquiry(service_slug_or_id, name, email, phone, message):
     logger.info(
         f"ServiceEnquiry #{enquiry.id} created: {name!r} for service {service_type.title!r}"
     )
+
+    notify_admin(
+        title=f"New Service Enquiry: {service_type.title}",
+        message=f"From {name} ({email}, {phone}): {message}",
+        notification_type="enquiry",
+    )
+
+    try:
+        send_service_enquiry_notification(enquiry)
+    except Exception as exc:
+        logger.error(f"Failed to dispatch Resend service enquiry email: {exc}", exc_info=True)
+
     return enquiry
 
 
@@ -177,6 +229,18 @@ def create_contact_message(name, email, phone, message, subject=""):
     )
 
     logger.info(f"ContactMessage #{contact.id} created from {name!r} <{email}>")
+
+    notify_admin(
+        title=f"New Contact Message: {contact.subject or 'General Enquiry'}",
+        message=f"From {name} ({email}, {phone}): {message}",
+        notification_type="system",
+    )
+
+    try:
+        send_contact_notification(contact)
+    except Exception as exc:
+        logger.error(f"Failed to dispatch Resend contact email: {exc}", exc_info=True)
+
     return contact
 
 
@@ -191,21 +255,7 @@ def send_enquiry_reply(
     sender_user=None,
 ) -> EnquiryReply:
     """
-    Sends a reply email to an enquiry submitter and records the reply in the database.
-
-    Works with PropertyEnquiry, ServiceEnquiry, and ContactMessage.
-
-    Args:
-        enquiry_instance: Any AbstractEnquiry subclass instance.
-        subject: Email subject line.
-        message: Reply message body.
-        sender_user: The admin User who sent the reply (optional).
-
-    Returns:
-        EnquiryReply: The created reply record.
-
-    Raises:
-        ValueError: If the enquiry instance type is unrecognized.
+    Sends a reply email to an enquiry submitter and records the reply in the database via Resend.
     """
     recipient_email = enquiry_instance.email
     sender_name = (
@@ -216,10 +266,8 @@ def send_enquiry_reply(
 
     # 1. Record reply and update enquiry atomically
     with transaction.atomic():
-        # Get the ContentType for the generic FK
         content_type = ContentType.objects.get_for_model(enquiry_instance)
 
-        # Record the reply (initially email_delivered=False)
         reply = EnquiryReply.objects.create(
             content_type=content_type,
             object_id=enquiry_instance.pk,
@@ -230,14 +278,13 @@ def send_enquiry_reply(
             email_delivered=False,
         )
 
-        # Mark enquiry as replied
         type(enquiry_instance).objects.filter(pk=enquiry_instance.pk).update(
             replied=True,
             status="Responded",
         )
 
-    # 2. Send the email outside of the transaction block
-    delivered = send_reply_email(
+    # 2. Send the email via Resend
+    delivered = send_resend_reply_email(
         recipient_email=recipient_email,
         subject=subject,
         reply_message=message,
@@ -249,13 +296,14 @@ def send_enquiry_reply(
         reply.email_delivered = True
         reply.save(update_fields=["email_delivered"])
         logger.info(
-            f"Reply #{reply.id} sent to {recipient_email} for "
+            f"Reply #{reply.id} sent via Resend to {recipient_email} for "
             f"{type(enquiry_instance).__name__} #{enquiry_instance.pk}"
         )
     else:
         logger.warning(
-            f"Reply #{reply.id} recorded but email delivery FAILED for "
+            f"Reply #{reply.id} recorded but Resend email delivery FAILED for "
             f"{recipient_email} ({type(enquiry_instance).__name__} #{enquiry_instance.pk})"
         )
 
     return reply
+

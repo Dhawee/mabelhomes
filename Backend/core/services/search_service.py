@@ -8,6 +8,7 @@ def search_and_filter_properties(
     city=None,
     type_slug=None,
     status=None,
+    listing_type=None,
     price_min=None,
     price_max=None,
     bedrooms=None,
@@ -17,6 +18,7 @@ def search_and_filter_properties(
     is_visible=None,
     show_deleted=False,
     prefetch_videos=True,
+    ordering=None,
 ):
     """
     Queries visible, non-deleted properties based on filters.
@@ -40,7 +42,15 @@ def search_and_filter_properties(
     )
     if prefetch_videos:
         queryset = queryset.prefetch_related("videos")
-    queryset = queryset.order_by("-created_at")
+
+    if ordering:
+        valid_orderings = ["created_at", "-created_at", "price", "-price", "title", "-title"]
+        if ordering in valid_orderings:
+            queryset = queryset.order_by(ordering)
+        else:
+            queryset = queryset.order_by("-created_at")
+    else:
+        queryset = queryset.order_by("-created_at")
 
     # Apply search text matches across multiple fields
     if search_query:
@@ -65,6 +75,9 @@ def search_and_filter_properties(
 
     if status:
         queryset = queryset.filter(status__iexact=status.strip())
+
+    if listing_type and listing_type.lower() not in ("all", "*"):
+        queryset = queryset.filter(listing_type__iexact=listing_type.strip())
 
     # Range Filters
     if price_min is not None:

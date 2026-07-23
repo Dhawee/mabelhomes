@@ -24,6 +24,7 @@ export interface Property {
   previous_price?: number;
   current_price?: number;
   status: "For Sale" | "For Rent" | "Sold" | "Under Offer" | "Shortlet" | "Archived";
+  listing_type?: "property" | "shortlet";
   type: string;
   type_slug: string;
   featured: boolean;
@@ -61,6 +62,10 @@ export interface PropertyEnquiry {
   email: string;
   phone: string;
   message: string;
+  check_in_date?: string | null;
+  check_out_date?: string | null;
+  guests?: number | null;
+  listing_type?: "property" | "shortlet";
   status: "Pending" | "Responded" | "Closed";
   replied: boolean;
   created_at: string;

@@ -18,7 +18,7 @@ def get_similar_properties(property_instance, limit=3):
     4. Overlapping features & amenities
     """
     candidates = (
-        Property.objects.filter(is_visible=True, is_deleted=False)
+        Property.objects.filter(is_visible=True, is_deleted=False, listing_type=property_instance.listing_type)
         .exclude(id=property_instance.id)
         .select_related("property_type")
         .prefetch_related("images")

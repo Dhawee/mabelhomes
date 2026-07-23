@@ -22,12 +22,12 @@ function PropertiesContent() {
   const perPage = 6;
 
   useEffect(() => {
-    // Fetch all properties from API (requesting a high limit/page size to support client-side filtering/pagination on full set)
-    fetch(`${API_BASE_URL}/api/properties/?page_size=100`)
+    // Fetch only properties available for sale
+    fetch(`${API_BASE_URL}/api/properties/?listing_type=property&page_size=100`)
       .then((res) => res.json())
       .then((data) => {
         const list = Array.isArray(data) ? data : (data.results || []);
-        setProperties(list);
+        setProperties(list.filter((p: Property) => p.listing_type !== "shortlet"));
         setLoading(false);
       })
       .catch((err) => {
@@ -37,9 +37,15 @@ function PropertiesContent() {
   }, []);
 
   const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
     return properties.filter((p) => {
-      if (search && !p.title.toLowerCase().includes(search.toLowerCase()) &&
-          !p.location.toLowerCase().includes(search.toLowerCase())) return false;
+      if (p.listing_type === "shortlet") return false;
+      if (q) {
+        const title = (p.title || "").toLowerCase();
+        const loc = (p.location || "").toLowerCase();
+        const desc = (p.description || "").toLowerCase();
+        if (!title.includes(q) && !loc.includes(q) && !desc.includes(q)) return false;
+      }
       if (location && p.city !== location) return false;
       if (type && p.type !== type) return false;
       if (status && p.status !== status) return false;
@@ -50,8 +56,23 @@ function PropertiesContent() {
   const totalPages = Math.ceil(filtered.length / perPage);
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
 
-  const cities = useMemo(() => [...new Set(properties.map((p) => p.city))], [properties]);
-  const types = useMemo(() => [...new Set(properties.map((p) => p.type))], [properties]);
+  const [dbLocations, setDbLocations] = useState<string[]>([]);
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/properties/locations/`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) setDbLocations(data);
+      })
+      .catch(() => {});
+  }, []);
+
+  const cities = useMemo(() => {
+    if (dbLocations.length > 0) return dbLocations;
+    const set = new Set(properties.map((p) => (p.city || "").trim()).filter(Boolean));
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [properties, dbLocations]);
+
+  const types = useMemo(() => [...new Set(properties.map((p) => p.type).filter(Boolean))], [properties]);
 
   if (loading) {
     return <div className="text-center py-20 text-navy/60 dark:text-white/60">Loading properties from Mabel Homes...</div>;

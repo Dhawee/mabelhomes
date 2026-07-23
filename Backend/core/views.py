@@ -122,11 +122,23 @@ class PropertyViewSet(viewsets.ModelViewSet):
         if show_deleted_param is not None:
             show_deleted_val = show_deleted_param.lower() in ("true", "1", "yes")
 
+        listing_type_param = self.request.query_params.get("listing_type")
+        ordering_param = self.request.query_params.get("ordering")
+
+        if not listing_type_param:
+            if is_staff:
+                listing_type = None
+            else:
+                listing_type = "property"
+        else:
+            listing_type = None if listing_type_param.lower() in ("all", "*") else listing_type_param
+
         return search_and_filter_properties(
             search_query=search_query,
             city=city,
             type_slug=type_slug,
             status=status_param,
+            listing_type=listing_type,
             price_min=price_min,
             price_max=price_max,
             bedrooms=bedrooms,
@@ -136,7 +148,27 @@ class PropertyViewSet(viewsets.ModelViewSet):
             is_visible=is_visible_val,
             show_deleted=show_deleted_val,
             prefetch_videos=(self.action != "list"),
+            ordering=ordering_param,
         )
+
+    @action(detail=False, methods=["get"], permission_classes=[permissions.AllowAny])
+    def locations(self, request):
+        """
+        Returns a sorted, unique list of non-empty cities/locations across all visible Properties and Shortlets.
+        """
+        raw_cities = (
+            Property.objects.filter(is_visible=True, is_deleted=False)
+            .exclude(city="")
+            .values_list("city", flat=True)
+            .distinct()
+        )
+        cities_set = set()
+        for c in raw_cities:
+            if c and c.strip():
+                cities_set.add(c.strip())
+
+        sorted_cities = sorted(list(cities_set))
+        return Response(sorted_cities)
 
     def create(self, request, *args, **kwargs):
         # Idempotency check: check if a property with identical details was created in the last 2 minutes
@@ -531,7 +563,6 @@ class PropertyVideoViewSet(viewsets.ModelViewSet):
 # ---------------------------------------------------------------------------
 
 class PropertyEnquiryViewSet(viewsets.ModelViewSet):
-    queryset = PropertyEnquiry.objects.filter(is_deleted=False).order_by("-created_at")
     serializer_class = PropertyEnquirySerializer
 
     def get_permissions(self):
@@ -539,12 +570,53 @@ class PropertyEnquiryViewSet(viewsets.ModelViewSet):
             return [permissions.AllowAny()]
         return [DjangoModelPermissionsOrStaffExplicit()]
 
+    def get_queryset(self):
+        qs = PropertyEnquiry.objects.filter(is_deleted=False)
+        listing_type = self.request.query_params.get("listing_type")
+        status_param = self.request.query_params.get("status")
+        property_param = self.request.query_params.get("property")
+        search = self.request.query_params.get("search")
+        ordering = self.request.query_params.get("ordering", "-created_at")
+
+        if listing_type and listing_type.lower() != "all":
+            qs = qs.filter(listing_type__iexact=listing_type)
+
+        if status_param:
+            qs = qs.filter(status__iexact=status_param)
+
+        if property_param:
+            qs = qs.filter(property_id=property_param)
+
+        if search:
+            query_terms = search.strip().split()
+            search_filter = Q()
+            for term in query_terms:
+                search_filter &= (
+                    Q(name__icontains=term)
+                    | Q(email__icontains=term)
+                    | Q(phone__icontains=term)
+                    | Q(property_title__icontains=term)
+                    | Q(message__icontains=term)
+                )
+            qs = qs.filter(search_filter)
+
+        valid_orderings = ["created_at", "-created_at", "name", "-name"]
+        if ordering in valid_orderings:
+            qs = qs.order_by(ordering)
+        else:
+            qs = qs.order_by("-created_at")
+
+        return qs
+
     def create(self, request, *args, **kwargs):
         property_id = request.data.get("property")
         name = request.data.get("name")
         email = request.data.get("email")
         phone = request.data.get("phone")
         message = request.data.get("message", "")
+        check_in_date = request.data.get("check_in_date")
+        check_out_date = request.data.get("check_out_date")
+        guests = request.data.get("guests")
 
         try:
             enquiry = create_property_enquiry(
@@ -553,6 +625,9 @@ class PropertyEnquiryViewSet(viewsets.ModelViewSet):
                 email=email,
                 phone=phone,
                 message=message,
+                check_in_date=check_in_date,
+                check_out_date=check_out_date,
+                guests=guests,
             )
             serializer = self.get_serializer(enquiry)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -703,13 +778,49 @@ class PropertyEnquiryViewSet(viewsets.ModelViewSet):
 
 
 class ServiceEnquiryViewSet(viewsets.ModelViewSet):
-    queryset = ServiceEnquiry.objects.filter(is_deleted=False).order_by("-created_at")
     serializer_class = ServiceEnquirySerializer
 
     def get_permissions(self):
         if self.action in ["create", "client_reply"]:
             return [permissions.AllowAny()]
         return [DjangoModelPermissionsOrStaffExplicit()]
+
+    def get_queryset(self):
+        qs = ServiceEnquiry.objects.filter(is_deleted=False)
+        status_param = self.request.query_params.get("status")
+        service_param = self.request.query_params.get("service")
+        search = self.request.query_params.get("search")
+        ordering = self.request.query_params.get("ordering", "-created_at")
+
+        if status_param:
+            qs = qs.filter(status__iexact=status_param)
+
+        if service_param:
+            if str(service_param).isdigit():
+                qs = qs.filter(service_type_id=int(service_param))
+            else:
+                qs = qs.filter(service_type__slug=service_param)
+
+        if search:
+            query_terms = search.strip().split()
+            search_filter = Q()
+            for term in query_terms:
+                search_filter &= (
+                    Q(name__icontains=term)
+                    | Q(email__icontains=term)
+                    | Q(phone__icontains=term)
+                    | Q(service_title__icontains=term)
+                    | Q(message__icontains=term)
+                )
+            qs = qs.filter(search_filter)
+
+        valid_orderings = ["created_at", "-created_at", "name", "-name"]
+        if ordering in valid_orderings:
+            qs = qs.order_by(ordering)
+        else:
+            qs = qs.order_by("-created_at")
+
+        return qs
 
     def create(self, request, *args, **kwargs):
         service_type_id_or_slug = request.data.get("service_type")
@@ -875,13 +986,42 @@ class ServiceEnquiryViewSet(viewsets.ModelViewSet):
 
 
 class ContactMessageViewSet(viewsets.ModelViewSet):
-    queryset = ContactMessage.objects.filter(is_deleted=False).order_by("-created_at")
     serializer_class = ContactMessageSerializer
 
     def get_permissions(self):
         if self.action in ["create", "client_reply"]:
             return [permissions.AllowAny()]
         return [DjangoModelPermissionsOrStaffExplicit()]
+
+    def get_queryset(self):
+        qs = ContactMessage.objects.filter(is_deleted=False)
+        status_param = self.request.query_params.get("status")
+        search = self.request.query_params.get("search")
+        ordering = self.request.query_params.get("ordering", "-created_at")
+
+        if status_param:
+            qs = qs.filter(status__iexact=status_param)
+
+        if search:
+            query_terms = search.strip().split()
+            search_filter = Q()
+            for term in query_terms:
+                search_filter &= (
+                    Q(name__icontains=term)
+                    | Q(email__icontains=term)
+                    | Q(phone__icontains=term)
+                    | Q(subject__icontains=term)
+                    | Q(message__icontains=term)
+                )
+            qs = qs.filter(search_filter)
+
+        valid_orderings = ["created_at", "-created_at", "name", "-name"]
+        if ordering in valid_orderings:
+            qs = qs.order_by(ordering)
+        else:
+            qs = qs.order_by("-created_at")
+
+        return qs
 
     def create(self, request, *args, **kwargs):
         name = request.data.get("name")

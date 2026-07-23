@@ -53,6 +53,7 @@ export default function PropertyForm({
     bathrooms: initialData.bathrooms ?? "",
     sqft: initialData.sqft ?? "",
     status: (initialData.status || "For Sale") as "For Sale" | "For Rent" | "Sold" | "Under Offer" | "Shortlet" | "Archived",
+    listing_type: (initialData.listing_type || (initialData.status === "Shortlet" ? "shortlet" : "property")) as "property" | "shortlet",
     property_type: initialData.property_type ?? "",
     featured: initialData.featured ?? false,
     luxury: initialData.luxury ?? false,
@@ -154,6 +155,7 @@ export default function PropertyForm({
       bathrooms: Number(form.bathrooms || 0),
       sqft: Number(form.sqft || 0),
       status: form.status,
+      listing_type: form.listing_type,
       property_type: Number(form.property_type),
       featured: form.featured,
       luxury: form.luxury,
@@ -472,6 +474,39 @@ export default function PropertyForm({
         <div className="xl:col-span-2 space-y-5">
           <div className="card card-body space-y-4">
             <h2 className="font-bold text-gray-800 text-sm uppercase tracking-wide">General Information</h2>
+
+            {/* Listing Type Toggle Switch */}
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
+                Listing Type / Destination
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, listing_type: "property", status: f.status === "Shortlet" ? "For Sale" : f.status }))}
+                  className={`p-3 rounded-xl border text-xs sm:text-sm font-bold flex flex-col items-center gap-1 transition-all ${
+                    form.listing_type === "property"
+                      ? "bg-navy text-white border-navy shadow-sm ring-2 ring-navy/20"
+                      : "bg-white text-gray-700 border-gray-200 hover:bg-gray-100"
+                  }`}
+                >
+                  <span>🏡 Property for Sale</span>
+                  <span className="text-[11px] font-normal opacity-80">Appears on /properties</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, listing_type: "shortlet", status: "Shortlet" }))}
+                  className={`p-3 rounded-xl border text-xs sm:text-sm font-bold flex flex-col items-center gap-1 transition-all ${
+                    form.listing_type === "shortlet"
+                      ? "bg-gold text-white border-gold shadow-sm ring-2 ring-gold/20"
+                      : "bg-white text-gray-700 border-gray-200 hover:bg-gray-100"
+                  }`}
+                >
+                  <span>🔑 Shortlet Apartment</span>
+                  <span className="text-[11px] font-normal opacity-80">Appears on /shortlets</span>
+                </button>
+              </div>
+            </div>
 
             <div>
               <label className="form-label">Property Title</label>

@@ -42,7 +42,7 @@ export default function FeaturedProperties() {
   useEffect(() => {
     async function fetchAllFeatured() {
       const all: Property[] = [];
-      let url: string | null = `${API_BASE_URL}/api/properties/?featured=true`;
+      let url: string | null = `${API_BASE_URL}/api/properties/?featured=true&listing_type=property`;
       try {
         while (url) {
           const res: Response = await fetch(url);

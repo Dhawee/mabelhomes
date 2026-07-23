@@ -1,5 +1,6 @@
 import Image from "next/image";
-import { Check, Instagram } from "lucide-react";
+import Link from "next/link";
+import { Check, Instagram, Calendar, ArrowRight } from "lucide-react";
 import FadeIn from "@/components/ui/FadeIn";
 
 const shortletFeatures = [
@@ -48,7 +49,7 @@ export default function Shortlets() {
                   of high-end, fully-serviced shortlet accommodations.
                 </p>
                 <p>
-                  Whether you are traveling for business, or on Holiday with family, or looking for a
+                  Whether you are traveling for business, on holiday with family, or looking for a
                   peaceful escape, our spaces are carefully curated to provide the comfort of a home and the luxury of a premium hotel.
                 </p>
               </div>
@@ -65,22 +66,41 @@ export default function Shortlets() {
                 ))}
               </ul>
 
-              {/* Contact Actions */}
-              <div className="pt-8 flex flex-wrap gap-4">
+              {/* 4 Action Buttons */}
+              <div className="pt-8 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <Link
+                  href="/shortlets"
+                  className="btn-gold shadow-gold inline-flex items-center justify-center gap-2 text-sm !py-3.5"
+                >
+                  <ArrowRight size={17} />
+                  See Apartments
+                </Link>
+
+                <a
+                  href="https://wa.me/2347063711532?text=Hello%20Mabel%20Homes,%20I%20would%20like%20to%20book%20a%20Shortlet%20Apartment."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-gold shadow-gold inline-flex items-center justify-center gap-2 text-sm !py-3.5"
+                >
+                  <Calendar size={17} />
+                  Book Now
+                </a>
+
                 <a
                   href="https://www.instagram.com/rosebowl_apartments?igsh=cnE2ZW13NGwxaDJr&utm_source=qr"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="btn-gold shadow-gold inline-flex items-center gap-2"
+                  className="btn-outline-gold inline-flex items-center justify-center gap-2 text-sm !py-3.5"
                 >
-                  <Instagram size={18} />
+                  <Instagram size={17} />
                   Explore on Instagram
                 </a>
+
                 <a
                   href="https://wa.me/2347063711532"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="btn-outline-gold inline-flex items-center gap-2 !px-8 !py-3.5"
+                  className="btn-outline-gold inline-flex items-center justify-center gap-2 text-sm !py-3.5"
                 >
                   <WhatsAppIcon />
                   Contact via WhatsApp
@@ -94,7 +114,7 @@ export default function Shortlets() {
             <FadeIn direction="right" delay={0.2}>
               <div className="grid grid-cols-2 gap-4">
                 {/* Large Featured Image */}
-                <div className="col-span-2 relative aspect-[16/10] rounded-2xl overflow-hidden group shadow-luxury border border-white/10">
+                <div className="col-span-2 relative aspect-[16/10] rounded-xl overflow-hidden group shadow-luxury border border-white/10">
                   <Image
                     src={shortletImages[0]}
                     alt="Rosebowl Living Space"
@@ -105,7 +125,7 @@ export default function Shortlets() {
                   <div className="absolute inset-0 bg-navy/20 group-hover:bg-navy/10 transition-colors duration-300" />
                 </div>
                 {/* Smaller Image 1 */}
-                <div className="relative aspect-[4/3] rounded-2xl overflow-hidden group shadow-luxury border border-white/10">
+                <div className="relative aspect-[4/3] rounded-xl overflow-hidden group shadow-luxury border border-white/10">
                   <Image
                     src={shortletImages[1]}
                     alt="Rosebowl Bedroom"
@@ -116,7 +136,7 @@ export default function Shortlets() {
                   <div className="absolute inset-0 bg-navy/20 group-hover:bg-navy/10 transition-colors duration-300" />
                 </div>
                 {/* Smaller Image 2 */}
-                <div className="relative aspect-[4/3] rounded-2xl overflow-hidden group shadow-luxury border border-white/10">
+                <div className="relative aspect-[4/3] rounded-xl overflow-hidden group shadow-luxury border border-white/10">
                   <Image
                     src={shortletImages[2]}
                     alt="Rosebowl Amenities"

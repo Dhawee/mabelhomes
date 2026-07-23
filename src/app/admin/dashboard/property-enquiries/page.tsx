@@ -18,6 +18,7 @@ export default function PropertyEnquiriesPage() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [ordering, setOrdering] = useState("-created_at");
   const [page, setPage] = useState(1);
 
   const load = useCallback(async () => {
@@ -27,7 +28,8 @@ export default function PropertyEnquiriesPage() {
       const params = new URLSearchParams({
         page: String(page),
         page_size: "20",
-        ordering: "-created_at",
+        listing_type: "property",
+        ordering: ordering,
       });
       if (search) params.set("search", search);
       if (statusFilter) params.set("status", statusFilter);
@@ -41,7 +43,7 @@ export default function PropertyEnquiriesPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, statusFilter]);
+  }, [page, search, statusFilter, ordering]);
 
   useEffect(() => { load(); }, [load]);
 

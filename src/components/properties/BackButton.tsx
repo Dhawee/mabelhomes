@@ -9,20 +9,26 @@ interface BackButtonProps {
   className?: string;
 }
 
-export default function BackButton({ fallback = "/properties", className = "" }: BackButtonProps) {
+export default function BackButton({ fallback = "/", className = "" }: BackButtonProps) {
   const router = useRouter();
-  const [canGoBack, setCanGoBack] = useState(false);
+  const [canGoBack, setCanGoBack] = useState(true);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const hasNextHistory = window.history.state && window.history.state.idx > 0;
-      const isSameOriginReferrer = !!(document.referrer && document.referrer.startsWith(window.location.origin));
-      setCanGoBack(!!(hasNextHistory || isSameOriginReferrer));
+      const hasHistory = window.history.length > 1;
+      const isSameOriginReferrer = !!(
+        document.referrer && document.referrer.startsWith(window.location.origin)
+      );
+      setCanGoBack(hasHistory || isSameOriginReferrer);
     }
   }, []);
 
   const handleBack = () => {
-    if (canGoBack) {
+    if (
+      typeof window !== "undefined" &&
+      (window.history.length > 1 ||
+        (document.referrer && document.referrer.startsWith(window.location.origin)))
+    ) {
       router.back();
     } else {
       router.push(fallback);
