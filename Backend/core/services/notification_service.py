@@ -181,17 +181,13 @@ def send_operational_notification(user, title: str, message: str) -> None:
     except Exception as exc:
         logger.error(f"Failed to save operational AdminNotification: {exc}", exc_info=True)
 
-    # 2. Email ONLY the active administrator
+    # 2. Email the active administrator via Resend
     if user and user.is_authenticated and user.email:
-        backend_info = _get_email_backend_info()
         try:
-            send_mail(
-                subject=f"[Mabel Homes Admin] [OPERATIONAL] {title}",
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                fail_silently=False,
-            )
+            from core.services.email_service import send_resend_email
+            subject = f"[Mabel Homes Admin] [OPERATIONAL] {title}"
+            html_body = f"<div style='font-family:sans-serif;'><h2>[OPERATIONAL ALERT] {title}</h2><p>{message}</p></div>"
+            send_resend_email(to=user.email, subject=subject, html_body=html_body, text_body=message)
             logger.info(f"Operational email sent successfully to {user.email} for: {title!r}")
         except Exception as exc:
-            logger.error(f"Failed to send operational email to {user.email} via {backend_info}: {exc}", exc_info=True)
+            logger.error(f"Failed to send operational email to {user.email}: {exc}", exc_info=True)

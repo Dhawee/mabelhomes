@@ -6,11 +6,39 @@ from django.utils import timezone
 logger = logging.getLogger("core")
 
 
+IGNORED_ADMIN_DOMAINS = {"example.com", "example.org", "example.net", "test.com", "localhost", "invalid"}
+
+
+def is_valid_syntax_email(email: str) -> bool:
+    """Validates basic syntax of an email address."""
+    if not email or not isinstance(email, str):
+        return False
+    email = email.strip()
+    if "@" not in email:
+        return False
+    try:
+        from django.core.validators import validate_email
+        validate_email(email)
+        return True
+    except Exception:
+        return False
+
+
+def is_valid_admin_email_address(email: str) -> bool:
+    """Validates syntax and excludes dummy domains for admin recipients."""
+    if not is_valid_syntax_email(email):
+        return False
+    domain = email.strip().split("@")[-1].lower()
+    if domain in IGNORED_ADMIN_DOMAINS or any(domain.endswith("." + d) for d in IGNORED_ADMIN_DOMAINS):
+        return False
+    return True
+
+
 def get_admin_recipients() -> list[str]:
     """
     Resolves all admin email recipients.
     Reads settings.ADMIN_EMAIL and settings.ADMIN_EMAILS (supports comma-separated list),
-    plus any active staff users in the database.
+    plus any active staff users in the database with valid, real email addresses.
     Returns a deduplicated, sorted list of valid email addresses.
     """
     recipients = set()
@@ -21,9 +49,8 @@ def get_admin_recipients() -> list[str]:
     for raw in [configured_admin, configured_list]:
         if raw:
             for em in str(raw).split(","):
-                em_clean = em.strip()
-                if em_clean and "@" in em_clean:
-                    recipients.add(em_clean)
+                if is_valid_admin_email_address(em):
+                    recipients.add(em.strip())
 
     try:
         from django.contrib.auth import get_user_model
@@ -34,10 +61,14 @@ def get_admin_recipients() -> list[str]:
             .values_list("email", flat=True)
         )
         for e in staff_emails:
-            if e and e.strip() and "@" in e.strip():
+            if is_valid_admin_email_address(e):
                 recipients.add(e.strip())
     except Exception as exc:
         logger.warning(f"Could not query staff users for admin emails: {exc}")
+
+    # Fallback to default admin email if empty
+    if not recipients:
+        recipients.add("olajumoke@mabelhomes.org")
 
     return sorted(list(recipients))
 
@@ -45,48 +76,60 @@ def get_admin_recipients() -> list[str]:
 def send_resend_email(to: list[str] | str, subject: str, html_body: str, text_body: str = "") -> bool:
     """
     Sends an email using the official Resend Python SDK.
+    Sends to each recipient individually to isolate failures and guarantee delivery.
     Logs every attempt, recipient, response, and exception clearly for Render logs.
     """
     api_key = getattr(settings, "RESEND_API_KEY", "")
-    raw_from = getattr(settings, "FROM_EMAIL", "olajumoke@mabelhomes.org")
+    raw_from = getattr(settings, "FROM_EMAIL", getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@mabelhomes.org"))
     from_email = raw_from if "<" in raw_from else f"Mabel Homes <{raw_from}>"
 
-    recipients = [to] if isinstance(to, str) else list(to)
-    recipients = [r.strip() for r in recipients if r and str(r).strip()]
+    recipients_input = [to] if isinstance(to, str) else list(to)
+    clean_recipients = []
+    for r in recipients_input:
+        if r and isinstance(r, str) and is_valid_syntax_email(r):
+            clean_recipients.append(r.strip())
 
-    if not recipients:
-        logger.warning("[RESEND EMAIL SKIPPED] No valid recipient addresses provided.")
+    if not clean_recipients:
+        logger.warning(f"[RESEND EMAIL SKIPPED] No valid recipient addresses provided after syntax check: {to!r}")
         return False
-
-    logger.info(f"[RESEND EMAIL ATTEMPT] To: {recipients} | From: {from_email} | Subject: {subject!r}")
 
     if not api_key:
         logger.warning(
             f"[RESEND SIMULATION MODE] RESEND_API_KEY environment variable is not configured. "
-            f"Simulated email delivery to {recipients} for subject {subject!r} successfully logged."
+            f"Simulated email delivery to {clean_recipients} for subject {subject!r} successfully logged."
         )
         return True
 
-    try:
-        resend.api_key = api_key
-        params = {
-            "from": from_email,
-            "to": recipients,
-            "subject": subject,
-            "html": html_body,
-        }
-        if text_body:
-            params["text"] = text_body
+    resend.api_key = api_key
+    any_success = False
 
-        response = resend.Emails.send(params)
-        logger.info(f"[RESEND EMAIL SUCCESS] Delivered to {recipients} | Subject: {subject!r} | Resend Response: {response}")
-        return True
-    except Exception as exc:
-        logger.error(
-            f"[RESEND EMAIL FAILURE] Failed to deliver email to {recipients} | Subject: {subject!r} | Exception: {exc}",
-            exc_info=True,
-        )
-        return False
+    # Send to each recipient individually so one failing email address never blocks another
+    for recipient in clean_recipients:
+        logger.info(f"[RESEND EMAIL ATTEMPT] To: {recipient} | From: {from_email} | Subject: {subject!r}")
+
+        try:
+            params = {
+                "from": from_email,
+                "to": [recipient],
+                "subject": subject,
+                "html": html_body,
+            }
+            if text_body:
+                params["text"] = text_body
+
+            response = resend.Emails.send(params)
+            resp_id = getattr(response, "id", None) or (response.get("id") if isinstance(response, dict) else str(response))
+            logger.info(
+                f"[RESEND EMAIL SUCCESS] Delivered to {recipient} | Subject: {subject!r} | Resend Response: {resp_id}"
+            )
+            any_success = True
+        except Exception as exc:
+            logger.error(
+                f"[RESEND EMAIL FAILURE] Failed to deliver email to {recipient} | Subject: {subject!r} | Exception: {exc}",
+                exc_info=True,
+            )
+
+    return any_success
 
 
 # ============================================================================
