@@ -24,73 +24,21 @@ def _get_email_backend_info():
 
 def notify_admin(title: str, message: str, notification_type: str = "system") -> None:
     """
-    Creates an in-app AdminNotification record and sends email
-    notifications to all active staff/administrator accounts dynamically.
-
-    Always writes the DB notification first (so it's never lost),
-    then attempts email delivery asynchronously and logs the outcome.
-
-    Args:
-        title: Short notification title.
-        message: Detailed notification body.
-        notification_type: One of AdminNotification.NOTIFICATION_TYPE_CHOICES values.
+    Creates an in-app AdminNotification record.
+    Always writes the DB notification first so it's never lost.
     """
-    # 1. Persist the in-app notification — must never be skipped
     try:
-        AdminNotification.objects.create(
+        notif = AdminNotification.objects.create(
             title=title,
             message=message,
             notification_type=notification_type,
         )
-        logger.debug(f"AdminNotification saved to database: {title!r}")
+        logger.info(f"[ADMIN NOTIFICATION SAVED] AdminNotification #{notif.id} created: {title!r}")
     except Exception as exc:
         logger.error(
             f"CRITICAL: Failed to save AdminNotification to database: {exc}",
             exc_info=True,
         )
-
-    # 2. Query active staff user email list dynamically from DB
-    from django.contrib.auth import get_user_model
-    User = get_user_model()
-    recipient_emails = list(
-        User.objects.filter(is_active=True, is_staff=True)
-        .exclude(email="")
-        .values_list("email", flat=True)
-    )
-
-    if not recipient_emails:
-        recipient_emails = [settings.ADMIN_EMAIL]
-
-    # 3. Attempt email delivery to all resolved admins asynchronously in a separate thread
-    backend_info = _get_email_backend_info()
-    is_console = getattr(settings, "EMAIL_BACKEND_IS_CONSOLE", False)
-
-    if is_console:
-        logger.info(
-            f"Email backend: {backend_info}. "
-            f"The following notification will be printed to the console instead of delivered."
-        )
-
-    import threading
-
-    def _send():
-        try:
-            from core.services.email_service import send_resend_email
-            send_resend_email(
-                to=recipient_emails,
-                subject=f"[Mabel Homes Admin] {title}",
-                text_body=message,
-                html_body=f"<div style='font-family:sans-serif;'><h2>[Mabel Homes Admin] {title}</h2><p>{message}</p></div>",
-            )
-        except Exception as exc:
-            logger.error(
-                f"Failed to send admin email notification via Resend: {exc}",
-                exc_info=True,
-            )
-
-    thread = threading.Thread(target=_send)
-    thread.daemon = False
-    thread.start()
 
 
 def send_html_email(

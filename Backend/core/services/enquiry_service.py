@@ -11,6 +11,10 @@ from core.models import (ContactMessage, EnquiryReply, Property,
                          PropertyEnquiry, ServiceEnquiry, ServiceType)
 from core.services.email_service import (
     send_contact_notification,
+    send_customer_contact_confirmation,
+    send_customer_property_enquiry_confirmation,
+    send_customer_service_enquiry_confirmation,
+    send_customer_shortlet_enquiry_confirmation,
     send_property_enquiry_notification,
     send_reply_email as send_resend_reply_email,
     send_service_enquiry_notification,
@@ -91,6 +95,16 @@ def create_property_enquiry(
 
     listing_type = getattr(prop, "listing_type", "property")
 
+    parsed_guests = None
+    if guests is not None:
+        try:
+            import re
+            digits = re.findall(r"\d+", str(guests))
+            if digits:
+                parsed_guests = int(digits[0])
+        except (ValueError, TypeError):
+            parsed_guests = None
+
     enquiry = PropertyEnquiry.objects.create(
         property=prop,
         property_title=prop.title,
@@ -100,7 +114,7 @@ def create_property_enquiry(
         message=message.strip(),
         check_in_date=check_in_date,
         check_out_date=check_out_date,
-        guests=guests,
+        guests=parsed_guests,
         listing_type=listing_type,
     )
 
@@ -108,7 +122,7 @@ def create_property_enquiry(
         f"PropertyEnquiry #{enquiry.id} [{listing_type}] created: {name!r} enquiring about {prop.title!r}"
     )
 
-    # 1. Trigger in-app notification
+    # 1. Trigger in-app DB notification
     notif_title = f"New {'Shortlet' if listing_type == 'shortlet' else 'Property'} Enquiry: {prop.title}"
     notify_admin(
         title=notif_title,
@@ -116,14 +130,23 @@ def create_property_enquiry(
         notification_type="enquiry",
     )
 
-    # 2. Trigger Resend email notification asynchronously/safely
+    # 2. Trigger Admin Email Notification via Resend
     try:
         if listing_type == "shortlet":
             send_shortlet_enquiry_notification(enquiry)
         else:
             send_property_enquiry_notification(enquiry)
     except Exception as exc:
-        logger.error(f"Failed to dispatch Resend enquiry email: {exc}", exc_info=True)
+        logger.error(f"[ADMIN EMAIL ERROR] Failed to dispatch admin email for PropertyEnquiry #{enquiry.id}: {exc}", exc_info=True)
+
+    # 3. Trigger Customer Confirmation Email via Resend
+    try:
+        if listing_type == "shortlet":
+            send_customer_shortlet_enquiry_confirmation(enquiry)
+        else:
+            send_customer_property_enquiry_confirmation(enquiry)
+    except Exception as exc:
+        logger.error(f"[CUSTOMER EMAIL ERROR] Failed to dispatch customer confirmation email for PropertyEnquiry #{enquiry.id}: {exc}", exc_info=True)
 
     return enquiry
 
@@ -190,7 +213,12 @@ def create_service_enquiry(service_slug_or_id, name, email, phone, message):
     try:
         send_service_enquiry_notification(enquiry)
     except Exception as exc:
-        logger.error(f"Failed to dispatch Resend service enquiry email: {exc}", exc_info=True)
+        logger.error(f"[ADMIN EMAIL ERROR] Failed to dispatch admin email for ServiceEnquiry #{enquiry.id}: {exc}", exc_info=True)
+
+    try:
+        send_customer_service_enquiry_confirmation(enquiry)
+    except Exception as exc:
+        logger.error(f"[CUSTOMER EMAIL ERROR] Failed to dispatch customer confirmation email for ServiceEnquiry #{enquiry.id}: {exc}", exc_info=True)
 
     return enquiry
 
@@ -239,7 +267,12 @@ def create_contact_message(name, email, phone, message, subject=""):
     try:
         send_contact_notification(contact)
     except Exception as exc:
-        logger.error(f"Failed to dispatch Resend contact email: {exc}", exc_info=True)
+        logger.error(f"[ADMIN EMAIL ERROR] Failed to dispatch admin email for ContactMessage #{contact.id}: {exc}", exc_info=True)
+
+    try:
+        send_customer_contact_confirmation(contact)
+    except Exception as exc:
+        logger.error(f"[CUSTOMER EMAIL ERROR] Failed to dispatch customer confirmation email for ContactMessage #{contact.id}: {exc}", exc_info=True)
 
     return contact
 
