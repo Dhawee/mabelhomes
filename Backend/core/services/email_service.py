@@ -1,6 +1,7 @@
 import logging
 import resend
 from django.conf import settings
+from django.utils import timezone
 
 logger = logging.getLogger("core")
 
@@ -8,13 +9,21 @@ logger = logging.getLogger("core")
 def get_admin_recipients() -> list[str]:
     """
     Resolves all admin email recipients.
-    ALWAYS includes settings.ADMIN_EMAIL, plus any active staff users in the database.
-    Returns a deduplicated list of non-empty email strings.
+    Reads settings.ADMIN_EMAIL and settings.ADMIN_EMAILS (supports comma-separated list),
+    plus any active staff users in the database.
+    Returns a deduplicated, sorted list of valid email addresses.
     """
     recipients = set()
+
     configured_admin = getattr(settings, "ADMIN_EMAIL", "olajumoke@mabelhomes.org")
-    if configured_admin and configured_admin.strip():
-        recipients.add(configured_admin.strip())
+    configured_list = getattr(settings, "ADMIN_EMAILS", "")
+
+    for raw in [configured_admin, configured_list]:
+        if raw:
+            for em in str(raw).split(","):
+                em_clean = em.strip()
+                if em_clean and "@" in em_clean:
+                    recipients.add(em_clean)
 
     try:
         from django.contrib.auth import get_user_model
@@ -25,7 +34,7 @@ def get_admin_recipients() -> list[str]:
             .values_list("email", flat=True)
         )
         for e in staff_emails:
-            if e and e.strip():
+            if e and e.strip() and "@" in e.strip():
                 recipients.add(e.strip())
     except Exception as exc:
         logger.warning(f"Could not query staff users for admin emails: {exc}")
@@ -84,27 +93,147 @@ def send_resend_email(to: list[str] | str, subject: str, html_body: str, text_bo
 # Admin Notification Email Functions
 # ============================================================================
 
+def send_admin_event_notification(
+    title: str,
+    message: str,
+    notification_type: str = "system",
+    metadata: dict | None = None,
+) -> bool:
+    """
+    Sends a formatted Admin Notification Email via Resend whenever an event occurs.
+    Includes client details, submission date/time, and a direct link to the Admin Dashboard.
+    """
+    recipients = get_admin_recipients()
+    if not recipients:
+        logger.warning("[ADMIN EMAIL SKIPPED] No admin recipients resolved.")
+        return False
+
+    now_str = timezone.now().strftime("%B %d, %Y at %I:%M %p UTC")
+    admin_base_url = getattr(settings, "ADMIN_DASHBOARD_URL", "https://admin.mabelhomes.org")
+
+    if "shortlet" in notification_type.lower() or "shortlet" in title.lower():
+        action_url = f"{admin_base_url}/admin/dashboard/shortlet-enquiries"
+        action_label = "View Shortlet Enquiries"
+    elif "property" in notification_type.lower() or "property" in title.lower():
+        action_url = f"{admin_base_url}/admin/dashboard/property-enquiries"
+        action_label = "View Property Enquiries"
+    elif "service" in notification_type.lower() or "service" in title.lower():
+        action_url = f"{admin_base_url}/admin/dashboard/service-enquiries"
+        action_label = "View Service Enquiries"
+    elif "contact" in notification_type.lower() or "contact" in title.lower():
+        action_url = f"{admin_base_url}/admin/dashboard/contact-messages"
+        action_label = "View Contact Messages"
+    else:
+        action_url = f"{admin_base_url}/admin/dashboard"
+        action_label = "Open Admin Dashboard"
+
+    meta = metadata or {}
+    client_name = meta.get("name") or "N/A"
+    client_email = meta.get("email") or "N/A"
+    client_phone = meta.get("phone") or "N/A"
+    details_title = meta.get("details") or meta.get("title") or "N/A"
+
+    subject = f"[Mabel Homes Admin] {title}"
+
+    html_body = f"""
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {{ font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; margin: 0; padding: 0; background: #f5f5f5; }}
+    .container {{ max-width: 620px; margin: 25px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #e0e0e0; }}
+    .header {{ background: linear-gradient(135deg, #0f2044 0%, #1a3a6b 100%); padding: 25px 35px; }}
+    .header h2 {{ color: #c9a84c; margin: 0; font-size: 20px; font-weight: 700; letter-spacing: 0.5px; }}
+    .header p {{ color: rgba(255,255,255,0.7); margin: 4px 0 0; font-size: 12px; }}
+    .body {{ padding: 30px 35px; }}
+    .meta-table {{ width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13.5px; }}
+    .meta-table td {{ padding: 8px 12px; border-bottom: 1px solid #f0f0f0; }}
+    .meta-table td.label {{ font-weight: 600; color: #0f2044; width: 140px; background: #fafafa; }}
+    .message-box {{ background: #f8f9fa; border-left: 4px solid #c9a84c; padding: 16px 20px; margin: 20px 0; font-size: 14px; line-height: 1.6; color: #333; white-space: pre-wrap; border-radius: 0 8px 8px 0; }}
+    .btn-container {{ text-align: center; margin: 30px 0 10px; }}
+    .btn {{ display: inline-block; background: #c9a84c; color: #ffffff !important; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 600; font-size: 14px; box-shadow: 0 2px 6px rgba(201,168,76,0.3); }}
+    .footer {{ background: #f8f8f8; padding: 18px 35px; border-top: 1px solid #eee; text-align: center; font-size: 11px; color: #888; }}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h2>Mabel Homes Admin Notification</h2>
+      <p>Instant System Alert · {now_str}</p>
+    </div>
+    <div class="body">
+      <h3 style="color: #0f2044; margin-top: 0; font-size: 17px;">{title}</h3>
+      
+      <table class="meta-table">
+        <tr><td class="label">Date & Time:</td><td>{now_str}</td></tr>
+        {'<tr><td class="label">Client Name:</td><td>' + str(client_name) + '</td></tr>' if client_name != 'N/A' else ''}
+        {'<tr><td class="label">Client Email:</td><td>' + str(client_email) + '</td></tr>' if client_email != 'N/A' else ''}
+        {'<tr><td class="label">Client Phone:</td><td>' + str(client_phone) + '</td></tr>' if client_phone != 'N/A' else ''}
+        {'<tr><td class="label">Details:</td><td>' + str(details_title) + '</td></tr>' if details_title != 'N/A' else ''}
+      </table>
+
+      <div class="message-box">
+        <strong>Details / Request:</strong><br>
+        {message}
+      </div>
+
+      <div class="btn-container">
+        <a href="{action_url}" class="btn">{action_label} &rarr;</a>
+      </div>
+    </div>
+    <div class="footer">
+      This is an automated notification from Mabel Homes Admin System.
+    </div>
+  </div>
+</body>
+</html>
+"""
+    return send_resend_email(to=recipients, subject=subject, html_body=html_body, text_body=message)
+
+
 def send_property_enquiry_notification(enquiry) -> bool:
     """Sends email notification to administrators for a Property Enquiry."""
     recipients = get_admin_recipients()
     subject = f"[Mabel Homes Admin] New Property Enquiry: {enquiry.property_title}"
+    now_str = enquiry.created_at.strftime("%B %d, %Y at %I:%M %p UTC") if hasattr(enquiry, "created_at") and enquiry.created_at else timezone.now().strftime("%B %d, %Y at %I:%M %p UTC")
+    admin_base_url = getattr(settings, "ADMIN_DASHBOARD_URL", "https://admin.mabelhomes.org")
+    action_url = f"{admin_base_url}/admin/dashboard/property-enquiries"
+
     text_body = (
         f"New Property Enquiry Received:\n\n"
+        f"Date & Time: {now_str}\n"
         f"Property: {enquiry.property_title}\n"
         f"Customer Name: {enquiry.name}\n"
         f"Email: {enquiry.email}\n"
         f"Phone: {enquiry.phone}\n"
         f"Message: {enquiry.message}\n"
+        f"Dashboard Link: {action_url}\n"
     )
+
     html_body = f"""
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
-      <h2 style="color: #0f2044;">New Property Enquiry</h2>
-      <p><strong>Property:</strong> {enquiry.property_title}</p>
-      <p><strong>Customer Name:</strong> {enquiry.name}</p>
-      <p><strong>Email:</strong> {enquiry.email}</p>
-      <p><strong>Phone:</strong> {enquiry.phone}</p>
-      <p><strong>Message:</strong></p>
-      <blockquote style="background: #f9f9f9; padding: 10px; border-left: 4px solid #c9a84c;">{enquiry.message}</blockquote>
+    <div style="font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; padding: 25px; border: 1px solid #e0e0e0; border-radius: 12px; background: #ffffff;">
+      <div style="background: #0f2044; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+        <h2 style="color: #c9a84c; margin: 0;">Mabel Homes Admin Alert</h2>
+        <p style="color: #ffffff; opacity: 0.8; margin: 4px 0 0; font-size: 12px;">New Property Enquiry · {now_str}</p>
+      </div>
+      <div style="padding: 25px;">
+        <h3 style="color: #0f2044; margin-top: 0;">Enquiry for: {enquiry.property_title}</h3>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">
+          <tr><td style="padding: 8px; font-weight: bold; width: 140px; background: #fafafa;">Date & Time:</td><td style="padding: 8px;">{now_str}</td></tr>
+          <tr><td style="padding: 8px; font-weight: bold; background: #fafafa;">Client Name:</td><td style="padding: 8px;">{enquiry.name}</td></tr>
+          <tr><td style="padding: 8px; font-weight: bold; background: #fafafa;">Client Email:</td><td style="padding: 8px;"><a href="mailto:{enquiry.email}">{enquiry.email}</a></td></tr>
+          <tr><td style="padding: 8px; font-weight: bold; background: #fafafa;">Client Phone:</td><td style="padding: 8px;"><a href="tel:{enquiry.phone}">{enquiry.phone}</a></td></tr>
+          <tr><td style="padding: 8px; font-weight: bold; background: #fafafa;">Property:</td><td style="padding: 8px;">{enquiry.property_title}</td></tr>
+        </table>
+        <div style="background: #f8f9fa; border-left: 4px solid #c9a84c; padding: 15px; margin: 20px 0; font-size: 14px;">
+          <strong>Message:</strong><br>
+          <em style="display: block; margin-top: 6px;">"{enquiry.message}"</em>
+        </div>
+        <div style="text-align: center; margin-top: 30px;">
+          <a href="{action_url}" style="background: #c9a84c; color: #ffffff; text-decoration: none; padding: 12px 26px; border-radius: 8px; font-weight: bold; display: inline-block;">View in Admin Dashboard &rarr;</a>
+        </div>
+      </div>
     </div>
     """
     return send_resend_email(to=recipients, subject=subject, html_body=html_body, text_body=text_body)
@@ -114,11 +243,16 @@ def send_shortlet_enquiry_notification(enquiry) -> bool:
     """Sends email notification to administrators for a Shortlet Enquiry."""
     recipients = get_admin_recipients()
     subject = f"[Mabel Homes Admin] New Shortlet Enquiry: {enquiry.property_title}"
+    now_str = enquiry.created_at.strftime("%B %d, %Y at %I:%M %p UTC") if hasattr(enquiry, "created_at") and enquiry.created_at else timezone.now().strftime("%B %d, %Y at %I:%M %p UTC")
+    admin_base_url = getattr(settings, "ADMIN_DASHBOARD_URL", "https://admin.mabelhomes.org")
+    action_url = f"{admin_base_url}/admin/dashboard/shortlet-enquiries"
     check_in = enquiry.check_in_date or "N/A"
     check_out = enquiry.check_out_date or "N/A"
     guests = enquiry.guests or "N/A"
+
     text_body = (
         f"New Shortlet Enquiry Received:\n\n"
+        f"Date & Time: {now_str}\n"
         f"Apartment: {enquiry.property_title}\n"
         f"Customer Name: {enquiry.name}\n"
         f"Email: {enquiry.email}\n"
@@ -127,19 +261,34 @@ def send_shortlet_enquiry_notification(enquiry) -> bool:
         f"Check-Out: {check_out}\n"
         f"Guests: {guests}\n"
         f"Message: {enquiry.message}\n"
+        f"Dashboard Link: {action_url}\n"
     )
+
     html_body = f"""
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
-      <h2 style="color: #0f2044;">New Shortlet Apartment Enquiry</h2>
-      <p><strong>Apartment:</strong> {enquiry.property_title}</p>
-      <p><strong>Customer Name:</strong> {enquiry.name}</p>
-      <p><strong>Email:</strong> {enquiry.email}</p>
-      <p><strong>Phone:</strong> {enquiry.phone}</p>
-      <p><strong>Check-In:</strong> {check_in}</p>
-      <p><strong>Check-Out:</strong> {check_out}</p>
-      <p><strong>Guests:</strong> {guests}</p>
-      <p><strong>Message:</strong></p>
-      <blockquote style="background: #f9f9f9; padding: 10px; border-left: 4px solid #c9a84c;">{enquiry.message}</blockquote>
+    <div style="font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; padding: 25px; border: 1px solid #e0e0e0; border-radius: 12px; background: #ffffff;">
+      <div style="background: #0f2044; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+        <h2 style="color: #c9a84c; margin: 0;">Rosebowl Shortlets Admin Alert</h2>
+        <p style="color: #ffffff; opacity: 0.8; margin: 4px 0 0; font-size: 12px;">New Shortlet Reservation Request · {now_str}</p>
+      </div>
+      <div style="padding: 25px;">
+        <h3 style="color: #0f2044; margin-top: 0;">Apartment: {enquiry.property_title}</h3>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">
+          <tr><td style="padding: 8px; font-weight: bold; width: 140px; background: #fafafa;">Date & Time:</td><td style="padding: 8px;">{now_str}</td></tr>
+          <tr><td style="padding: 8px; font-weight: bold; background: #fafafa;">Client Name:</td><td style="padding: 8px;">{enquiry.name}</td></tr>
+          <tr><td style="padding: 8px; font-weight: bold; background: #fafafa;">Client Email:</td><td style="padding: 8px;"><a href="mailto:{enquiry.email}">{enquiry.email}</a></td></tr>
+          <tr><td style="padding: 8px; font-weight: bold; background: #fafafa;">Client Phone:</td><td style="padding: 8px;"><a href="tel:{enquiry.phone}">{enquiry.phone}</a></td></tr>
+          <tr><td style="padding: 8px; font-weight: bold; background: #fafafa;">Check-In:</td><td style="padding: 8px;">{check_in}</td></tr>
+          <tr><td style="padding: 8px; font-weight: bold; background: #fafafa;">Check-Out:</td><td style="padding: 8px;">{check_out}</td></tr>
+          <tr><td style="padding: 8px; font-weight: bold; background: #fafafa;">Guests:</td><td style="padding: 8px;">{guests}</td></tr>
+        </table>
+        <div style="background: #f8f9fa; border-left: 4px solid #c9a84c; padding: 15px; margin: 20px 0; font-size: 14px;">
+          <strong>Message:</strong><br>
+          <em style="display: block; margin-top: 6px;">"{enquiry.message}"</em>
+        </div>
+        <div style="text-align: center; margin-top: 30px;">
+          <a href="{action_url}" style="background: #c9a84c; color: #ffffff; text-decoration: none; padding: 12px 26px; border-radius: 8px; font-weight: bold; display: inline-block;">View Shortlet Enquiries &rarr;</a>
+        </div>
+      </div>
     </div>
     """
     return send_resend_email(to=recipients, subject=subject, html_body=html_body, text_body=text_body)
@@ -149,23 +298,44 @@ def send_service_enquiry_notification(enquiry) -> bool:
     """Sends email notification to administrators for a Service Enquiry."""
     recipients = get_admin_recipients()
     subject = f"[Mabel Homes Admin] New Service Enquiry: {enquiry.service_title}"
+    now_str = enquiry.created_at.strftime("%B %d, %Y at %I:%M %p UTC") if hasattr(enquiry, "created_at") and enquiry.created_at else timezone.now().strftime("%B %d, %Y at %I:%M %p UTC")
+    admin_base_url = getattr(settings, "ADMIN_DASHBOARD_URL", "https://admin.mabelhomes.org")
+    action_url = f"{admin_base_url}/admin/dashboard/service-enquiries"
+
     text_body = (
         f"New Service Enquiry Received:\n\n"
+        f"Date & Time: {now_str}\n"
         f"Service: {enquiry.service_title}\n"
         f"Customer Name: {enquiry.name}\n"
         f"Email: {enquiry.email}\n"
         f"Phone: {enquiry.phone}\n"
         f"Message: {enquiry.message}\n"
+        f"Dashboard Link: {action_url}\n"
     )
+
     html_body = f"""
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
-      <h2 style="color: #0f2044;">New Service Enquiry</h2>
-      <p><strong>Service:</strong> {enquiry.service_title}</p>
-      <p><strong>Customer Name:</strong> {enquiry.name}</p>
-      <p><strong>Email:</strong> {enquiry.email}</p>
-      <p><strong>Phone:</strong> {enquiry.phone}</p>
-      <p><strong>Message:</strong></p>
-      <blockquote style="background: #f9f9f9; padding: 10px; border-left: 4px solid #c9a84c;">{enquiry.message}</blockquote>
+    <div style="font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; padding: 25px; border: 1px solid #e0e0e0; border-radius: 12px; background: #ffffff;">
+      <div style="background: #0f2044; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+        <h2 style="color: #c9a84c; margin: 0;">Mabel Homes Admin Alert</h2>
+        <p style="color: #ffffff; opacity: 0.8; margin: 4px 0 0; font-size: 12px;">New Service Enquiry · {now_str}</p>
+      </div>
+      <div style="padding: 25px;">
+        <h3 style="color: #0f2044; margin-top: 0;">Service Category: {enquiry.service_title}</h3>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">
+          <tr><td style="padding: 8px; font-weight: bold; width: 140px; background: #fafafa;">Date & Time:</td><td style="padding: 8px;">{now_str}</td></tr>
+          <tr><td style="padding: 8px; font-weight: bold; background: #fafafa;">Client Name:</td><td style="padding: 8px;">{enquiry.name}</td></tr>
+          <tr><td style="padding: 8px; font-weight: bold; background: #fafafa;">Client Email:</td><td style="padding: 8px;"><a href="mailto:{enquiry.email}">{enquiry.email}</a></td></tr>
+          <tr><td style="padding: 8px; font-weight: bold; background: #fafafa;">Client Phone:</td><td style="padding: 8px;"><a href="tel:{enquiry.phone}">{enquiry.phone}</a></td></tr>
+          <tr><td style="padding: 8px; font-weight: bold; background: #fafafa;">Service:</td><td style="padding: 8px;">{enquiry.service_title}</td></tr>
+        </table>
+        <div style="background: #f8f9fa; border-left: 4px solid #c9a84c; padding: 15px; margin: 20px 0; font-size: 14px;">
+          <strong>Message:</strong><br>
+          <em style="display: block; margin-top: 6px;">"{enquiry.message}"</em>
+        </div>
+        <div style="text-align: center; margin-top: 30px;">
+          <a href="{action_url}" style="background: #c9a84c; color: #ffffff; text-decoration: none; padding: 12px 26px; border-radius: 8px; font-weight: bold; display: inline-block;">View Service Enquiries &rarr;</a>
+        </div>
+      </div>
     </div>
     """
     return send_resend_email(to=recipients, subject=subject, html_body=html_body, text_body=text_body)
@@ -175,23 +345,43 @@ def send_contact_notification(contact) -> bool:
     """Sends email notification to administrators for a Contact Message."""
     recipients = get_admin_recipients()
     subject = f"[Mabel Homes Admin] New Contact Message: {contact.subject or 'General Enquiry'}"
+    now_str = contact.created_at.strftime("%B %d, %Y at %I:%M %p UTC") if hasattr(contact, "created_at") and contact.created_at else timezone.now().strftime("%B %d, %Y at %I:%M %p UTC")
+    admin_base_url = getattr(settings, "ADMIN_DASHBOARD_URL", "https://admin.mabelhomes.org")
+    action_url = f"{admin_base_url}/admin/dashboard/contact-messages"
+
     text_body = (
         f"New Contact Message Received:\n\n"
+        f"Date & Time: {now_str}\n"
         f"Subject: {contact.subject or 'General Enquiry'}\n"
         f"Name: {contact.name}\n"
         f"Email: {contact.email}\n"
         f"Phone: {contact.phone}\n"
         f"Message: {contact.message}\n"
+        f"Dashboard Link: {action_url}\n"
     )
+
     html_body = f"""
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
-      <h2 style="color: #0f2044;">New Contact Form Submission</h2>
-      <p><strong>Subject:</strong> {contact.subject or 'General Enquiry'}</p>
-      <p><strong>Name:</strong> {contact.name}</p>
-      <p><strong>Email:</strong> {contact.email}</p>
-      <p><strong>Phone:</strong> {contact.phone}</p>
-      <p><strong>Message:</strong></p>
-      <blockquote style="background: #f9f9f9; padding: 10px; border-left: 4px solid #c9a84c;">{contact.message}</blockquote>
+    <div style="font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; padding: 25px; border: 1px solid #e0e0e0; border-radius: 12px; background: #ffffff;">
+      <div style="background: #0f2044; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+        <h2 style="color: #c9a84c; margin: 0;">Mabel Homes Admin Alert</h2>
+        <p style="color: #ffffff; opacity: 0.8; margin: 4px 0 0; font-size: 12px;">New Contact Form Submission · {now_str}</p>
+      </div>
+      <div style="padding: 25px;">
+        <h3 style="color: #0f2044; margin-top: 0;">Subject: {contact.subject or 'General Enquiry'}</h3>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">
+          <tr><td style="padding: 8px; font-weight: bold; width: 140px; background: #fafafa;">Date & Time:</td><td style="padding: 8px;">{now_str}</td></tr>
+          <tr><td style="padding: 8px; font-weight: bold; background: #fafafa;">Client Name:</td><td style="padding: 8px;">{contact.name}</td></tr>
+          <tr><td style="padding: 8px; font-weight: bold; background: #fafafa;">Client Email:</td><td style="padding: 8px;"><a href="mailto:{contact.email}">{contact.email}</a></td></tr>
+          <tr><td style="padding: 8px; font-weight: bold; background: #fafafa;">Client Phone:</td><td style="padding: 8px;"><a href="tel:{contact.phone}">{contact.phone}</a></td></tr>
+        </table>
+        <div style="background: #f8f9fa; border-left: 4px solid #c9a84c; padding: 15px; margin: 20px 0; font-size: 14px;">
+          <strong>Message:</strong><br>
+          <em style="display: block; margin-top: 6px;">"{contact.message}"</em>
+        </div>
+        <div style="text-align: center; margin-top: 30px;">
+          <a href="{action_url}" style="background: #c9a84c; color: #ffffff; text-decoration: none; padding: 12px 26px; border-radius: 8px; font-weight: bold; display: inline-block;">View Contact Messages &rarr;</a>
+        </div>
+      </div>
     </div>
     """
     return send_resend_email(to=recipients, subject=subject, html_body=html_body, text_body=text_body)

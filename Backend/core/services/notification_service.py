@@ -22,23 +22,41 @@ def _get_email_backend_info():
         return backend
 
 
-def notify_admin(title: str, message: str, notification_type: str = "system") -> None:
+def notify_admin(
+    title: str,
+    message: str,
+    notification_type: str = "system",
+    metadata: dict | None = None,
+    send_email: bool = True,
+) -> AdminNotification | None:
     """
-    Creates an in-app AdminNotification record.
-    Always writes the DB notification first so it's never lost.
+    1. Persists in-app AdminNotification record to database (never lost).
+    2. Sends formatted Admin Email Notification via Resend to configured admin recipients if send_email=True.
     """
+    notif = None
     try:
         notif = AdminNotification.objects.create(
             title=title,
             message=message,
             notification_type=notification_type,
         )
-        logger.info(f"[ADMIN NOTIFICATION SAVED] AdminNotification #{notif.id} created: {title!r}")
+        logger.info(f"[ADMIN NOTIFICATION DB SAVED] AdminNotification #{notif.id} [{notification_type}]: {title!r}")
     except Exception as exc:
-        logger.error(
-            f"CRITICAL: Failed to save AdminNotification to database: {exc}",
-            exc_info=True,
-        )
+        logger.error(f"CRITICAL: Failed to save AdminNotification to database: {exc}", exc_info=True)
+
+    if send_email:
+        try:
+            from core.services.email_service import send_admin_event_notification
+            send_admin_event_notification(
+                title=title,
+                message=message,
+                notification_type=notification_type,
+                metadata=metadata,
+            )
+        except Exception as exc:
+            logger.error(f"[ADMIN EMAIL EVENT ERROR] Failed to send admin email notification for {title!r}: {exc}", exc_info=True)
+
+    return notif
 
 
 def send_html_email(

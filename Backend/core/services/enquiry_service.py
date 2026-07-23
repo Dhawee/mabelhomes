@@ -128,6 +128,7 @@ def create_property_enquiry(
         title=notif_title,
         message=f"From {name} ({email}, {phone}): {message}",
         notification_type="enquiry",
+        send_email=False,
     )
 
     # 2. Trigger Admin Email Notification via Resend
@@ -208,6 +209,7 @@ def create_service_enquiry(service_slug_or_id, name, email, phone, message):
         title=f"New Service Enquiry: {service_type.title}",
         message=f"From {name} ({email}, {phone}): {message}",
         notification_type="enquiry",
+        send_email=False,
     )
 
     try:
@@ -262,6 +264,7 @@ def create_contact_message(name, email, phone, message, subject=""):
         title=f"New Contact Message: {contact.subject or 'General Enquiry'}",
         message=f"From {name} ({email}, {phone}): {message}",
         notification_type="system",
+        send_email=False,
     )
 
     try:
