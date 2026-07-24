@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { Building2, Search, RefreshCw, Download } from "lucide-react";
+import { Building2, Search, RefreshCw, Download, Trash2 } from "lucide-react";
 import { api } from "@/lib/admin/api";
 import type { ServiceEnquiry, PaginatedResponse } from "@/types/admin";
 
@@ -18,6 +18,7 @@ export default function ServiceEnquiriesPage() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -48,6 +49,22 @@ export default function ServiceEnquiriesPage() {
       load();
     } catch (err: any) {
       alert(err.message || "Failed to update.");
+    }
+  };
+
+  const handleDeleteEnquiry = async (id: number) => {
+    if (!window.confirm(`Are you sure you want to delete service enquiry #${id}? This action cannot be undone.`)) {
+      return;
+    }
+    setDeletingId(id);
+    try {
+      await api.delete(`/api/service-enquiries/${id}/`);
+      alert(`Service enquiry #${id} deleted successfully.`);
+      load();
+    } catch (err: any) {
+      alert(err.message || "Failed to delete service enquiry.");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -143,6 +160,14 @@ export default function ServiceEnquiriesPage() {
                             Mark Responded
                           </button>
                         )}
+                        <button
+                          onClick={() => handleDeleteEnquiry(enq.id)}
+                          disabled={deletingId === enq.id}
+                          className="btn btn-danger py-1 px-3 text-xs gap-1"
+                          title="Delete Service Enquiry"
+                        >
+                          <Trash2 size={12} /> {deletingId === enq.id ? "..." : "Delete"}
+                        </button>
                       </div>
                     </td>
                   </tr>

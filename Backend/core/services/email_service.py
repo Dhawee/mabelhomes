@@ -136,6 +136,15 @@ def send_resend_email(to: list[str] | str, subject: str, html_body: str, text_bo
 # Admin Notification Email Functions
 # ============================================================================
 
+def get_admin_dashboard_base_url() -> str:
+    """Returns the base site URL for generating admin links cleanly (e.g. https://mabelhomes.org)."""
+    raw = getattr(settings, "SITE_URL", getattr(settings, "ADMIN_DASHBOARD_URL", "https://mabelhomes.org"))
+    url = str(raw).strip().rstrip("/")
+    if url.endswith("/admin"):
+        url = url[:-6]
+    return url
+
+
 def send_admin_event_notification(
     title: str,
     message: str,
@@ -152,22 +161,22 @@ def send_admin_event_notification(
         return False
 
     now_str = timezone.now().strftime("%B %d, %Y at %I:%M %p UTC")
-    admin_base_url = getattr(settings, "ADMIN_DASHBOARD_URL", "https://admin.mabelhomes.org")
+    base_url = get_admin_dashboard_base_url()
 
     if "shortlet" in notification_type.lower() or "shortlet" in title.lower():
-        action_url = f"{admin_base_url}/admin/dashboard/shortlet-enquiries"
+        action_url = f"{base_url}/admin/dashboard/shortlet-enquiries"
         action_label = "View Shortlet Enquiries"
     elif "property" in notification_type.lower() or "property" in title.lower():
-        action_url = f"{admin_base_url}/admin/dashboard/property-enquiries"
+        action_url = f"{base_url}/admin/dashboard/property-enquiries"
         action_label = "View Property Enquiries"
     elif "service" in notification_type.lower() or "service" in title.lower():
-        action_url = f"{admin_base_url}/admin/dashboard/service-enquiries"
+        action_url = f"{base_url}/admin/dashboard/service-enquiries"
         action_label = "View Service Enquiries"
     elif "contact" in notification_type.lower() or "contact" in title.lower():
-        action_url = f"{admin_base_url}/admin/dashboard/contact-messages"
+        action_url = f"{base_url}/admin/dashboard/contact-messages"
         action_label = "View Contact Messages"
     else:
-        action_url = f"{admin_base_url}/admin/dashboard"
+        action_url = f"{base_url}/admin/dashboard"
         action_label = "Open Admin Dashboard"
 
     meta = metadata or {}
@@ -240,8 +249,8 @@ def send_property_enquiry_notification(enquiry) -> bool:
     recipients = get_admin_recipients()
     subject = f"[Mabel Homes Admin] New Property Enquiry: {enquiry.property_title}"
     now_str = enquiry.created_at.strftime("%B %d, %Y at %I:%M %p UTC") if hasattr(enquiry, "created_at") and enquiry.created_at else timezone.now().strftime("%B %d, %Y at %I:%M %p UTC")
-    admin_base_url = getattr(settings, "ADMIN_DASHBOARD_URL", "https://admin.mabelhomes.org")
-    action_url = f"{admin_base_url}/admin/dashboard/property-enquiries"
+    base_url = get_admin_dashboard_base_url()
+    action_url = f"{base_url}/admin/dashboard/property-enquiries"
 
     text_body = (
         f"New Property Enquiry Received:\n\n"
@@ -287,8 +296,8 @@ def send_shortlet_enquiry_notification(enquiry) -> bool:
     recipients = get_admin_recipients()
     subject = f"[Mabel Homes Admin] New Shortlet Enquiry: {enquiry.property_title}"
     now_str = enquiry.created_at.strftime("%B %d, %Y at %I:%M %p UTC") if hasattr(enquiry, "created_at") and enquiry.created_at else timezone.now().strftime("%B %d, %Y at %I:%M %p UTC")
-    admin_base_url = getattr(settings, "ADMIN_DASHBOARD_URL", "https://admin.mabelhomes.org")
-    action_url = f"{admin_base_url}/admin/dashboard/shortlet-enquiries"
+    base_url = get_admin_dashboard_base_url()
+    action_url = f"{base_url}/admin/dashboard/shortlet-enquiries"
     check_in = enquiry.check_in_date or "N/A"
     check_out = enquiry.check_out_date or "N/A"
     guests = enquiry.guests or "N/A"
@@ -342,8 +351,8 @@ def send_service_enquiry_notification(enquiry) -> bool:
     recipients = get_admin_recipients()
     subject = f"[Mabel Homes Admin] New Service Enquiry: {enquiry.service_title}"
     now_str = enquiry.created_at.strftime("%B %d, %Y at %I:%M %p UTC") if hasattr(enquiry, "created_at") and enquiry.created_at else timezone.now().strftime("%B %d, %Y at %I:%M %p UTC")
-    admin_base_url = getattr(settings, "ADMIN_DASHBOARD_URL", "https://admin.mabelhomes.org")
-    action_url = f"{admin_base_url}/admin/dashboard/service-enquiries"
+    base_url = get_admin_dashboard_base_url()
+    action_url = f"{base_url}/admin/dashboard/service-enquiries"
 
     text_body = (
         f"New Service Enquiry Received:\n\n"
@@ -389,8 +398,8 @@ def send_contact_notification(contact) -> bool:
     recipients = get_admin_recipients()
     subject = f"[Mabel Homes Admin] New Contact Message: {contact.subject or 'General Enquiry'}"
     now_str = contact.created_at.strftime("%B %d, %Y at %I:%M %p UTC") if hasattr(contact, "created_at") and contact.created_at else timezone.now().strftime("%B %d, %Y at %I:%M %p UTC")
-    admin_base_url = getattr(settings, "ADMIN_DASHBOARD_URL", "https://admin.mabelhomes.org")
-    action_url = f"{admin_base_url}/admin/dashboard/contact-messages"
+    base_url = get_admin_dashboard_base_url()
+    action_url = f"{base_url}/admin/dashboard/contact-messages"
 
     text_body = (
         f"New Contact Message Received:\n\n"

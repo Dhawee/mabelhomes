@@ -1,8 +1,9 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
-import { ArrowLeft, MessageSquare, Send, RefreshCw } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, MessageSquare, Send, RefreshCw, Trash2 } from "lucide-react";
 import { api } from "@/lib/admin/api";
 import type { ServiceEnquiry } from "@/types/admin";
 
@@ -77,6 +78,23 @@ export default function ServiceEnquiryDetailPage({ params }: Props) {
     }
   };
 
+  const router = useRouter();
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteEnquiry = async () => {
+    if (!window.confirm(`Are you sure you want to PERMANENTLY delete service enquiry #${id}? This action cannot be undone.`)) return;
+    setDeleting(true);
+    try {
+      await api.delete(`/api/service-enquiries/${id}/`);
+      alert("Service enquiry deleted successfully.");
+      router.push("/admin/dashboard/service-enquiries");
+    } catch (err: any) {
+      alert(err.message || "Failed to delete service enquiry.");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const handleCloseEnquiry = async () => {
     try {
       await api.patch(`/api/service-enquiries/${id}/`, { status: "Closed" });
@@ -128,6 +146,14 @@ export default function ServiceEnquiryDetailPage({ params }: Props) {
               Close Enquiry
             </button>
           )}
+          <button
+            onClick={handleDeleteEnquiry}
+            disabled={deleting}
+            className="btn btn-danger py-2 text-xs gap-1"
+            title="Delete Service Enquiry"
+          >
+            <Trash2 size={14} /> {deleting ? "Deleting..." : "Delete"}
+          </button>
           <button onClick={loadData} className="btn btn-outline p-2" title="Refresh">
             <RefreshCw size={14} />
           </button>

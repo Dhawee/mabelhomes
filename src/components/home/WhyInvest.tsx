@@ -32,12 +32,12 @@ export default function WhyInvest() {
           </FadeIn>
 
           <FadeIn direction="right" delay={0.2}>
-            <div className="relative w-full h-[380px] sm:h-[480px] lg:h-[550px] rounded-2xl overflow-hidden shadow-luxury-lg">
+            <div className="relative w-full aspect-[4/3] sm:aspect-[4/5] lg:aspect-[4/5] rounded-2xl overflow-hidden shadow-luxury-lg bg-gray-50 dark:bg-navy-dark">
               <Image
-                src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200&q=90"
+                src="/images/home/Why Invest 1.jpg"
                 alt="Real estate investment"
                 fill
-                className="object-cover"
+                className="object-contain sm:object-cover"
                 sizes="(max-width: 1024px) 100vw, 50vw"
               />
             </div>

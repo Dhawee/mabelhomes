@@ -12,9 +12,9 @@ const shortletFeatures = [
 ];
 
 const shortletImages = [
-  "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=600&q=80", // Modern living room
-  "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=600&q=80", // Cozy bedroom
-  "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=600&q=80", // Hotel-like bathroom
+  "/images/home/Shortlet Accommodations 1.jpeg",
+  "/images/home/Shortlet Accommodations 2.jpeg",
+  "/images/home/Shortlet Accommodations 3.jpeg",
 ];
 
 const WhatsAppIcon = ({ className }: { className?: string }) => (
@@ -114,37 +114,37 @@ export default function Shortlets() {
             <FadeIn direction="right" delay={0.2}>
               <div className="grid grid-cols-2 gap-4">
                 {/* Large Featured Image */}
-                <div className="col-span-2 relative aspect-[16/10] rounded-xl overflow-hidden group shadow-luxury border border-white/10">
+                <div className="col-span-2 relative aspect-[16/10] rounded-xl overflow-hidden group shadow-luxury border border-white/10 bg-gray-50 dark:bg-navy-dark">
                   <Image
                     src={shortletImages[0]}
                     alt="Rosebowl Living Space"
                     fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-700"
+                    className="object-contain sm:object-cover group-hover:scale-105 transition-transform duration-700"
                     sizes="50vw"
                   />
-                  <div className="absolute inset-0 bg-navy/20 group-hover:bg-navy/10 transition-colors duration-300" />
+                  <div className="absolute inset-0 bg-navy/10 group-hover:bg-transparent transition-colors duration-300 pointer-events-none" />
                 </div>
                 {/* Smaller Image 1 */}
-                <div className="relative aspect-[4/3] rounded-xl overflow-hidden group shadow-luxury border border-white/10">
+                <div className="relative aspect-[4/3] rounded-xl overflow-hidden group shadow-luxury border border-white/10 bg-gray-50 dark:bg-navy-dark">
                   <Image
                     src={shortletImages[1]}
                     alt="Rosebowl Bedroom"
                     fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-700"
+                    className="object-contain sm:object-cover group-hover:scale-105 transition-transform duration-700"
                     sizes="25vw"
                   />
-                  <div className="absolute inset-0 bg-navy/20 group-hover:bg-navy/10 transition-colors duration-300" />
+                  <div className="absolute inset-0 bg-navy/10 group-hover:bg-transparent transition-colors duration-300 pointer-events-none" />
                 </div>
                 {/* Smaller Image 2 */}
-                <div className="relative aspect-[4/3] rounded-xl overflow-hidden group shadow-luxury border border-white/10">
+                <div className="relative aspect-[4/3] rounded-xl overflow-hidden group shadow-luxury border border-white/10 bg-gray-50 dark:bg-navy-dark">
                   <Image
                     src={shortletImages[2]}
                     alt="Rosebowl Amenities"
                     fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-700"
+                    className="object-contain sm:object-cover group-hover:scale-105 transition-transform duration-700"
                     sizes="25vw"
                   />
-                  <div className="absolute inset-0 bg-navy/20 group-hover:bg-navy/10 transition-colors duration-300" />
+                  <div className="absolute inset-0 bg-navy/10 group-hover:bg-transparent transition-colors duration-300 pointer-events-none" />
                 </div>
               </div>
             </FadeIn>

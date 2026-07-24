@@ -669,14 +669,14 @@ class PropertyEnquiryViewSet(viewsets.ModelViewSet):
         )
 
     def perform_destroy(self, instance):
-        instance.is_deleted = True
-        instance.save(update_fields=["is_deleted"])
+        pk = instance.pk
+        instance.delete()
         log_action(
             user=self.request.user,
             action="delete",
             model_name="PropertyEnquiry",
-            object_id=instance.pk,
-            description=f"Soft-deleted property enquiry #{instance.pk}",
+            object_id=pk,
+            description=f"Deleted property enquiry #{pk}",
             request=self.request
         )
 
@@ -877,14 +877,14 @@ class ServiceEnquiryViewSet(viewsets.ModelViewSet):
         )
 
     def perform_destroy(self, instance):
-        instance.is_deleted = True
-        instance.save(update_fields=["is_deleted"])
+        pk = instance.pk
+        instance.delete()
         log_action(
             user=self.request.user,
             action="delete",
             model_name="ServiceEnquiry",
-            object_id=instance.pk,
-            description=f"Soft-deleted service enquiry #{instance.pk}",
+            object_id=pk,
+            description=f"Deleted service enquiry #{pk}",
             request=self.request
         )
 
@@ -1078,14 +1078,14 @@ class ContactMessageViewSet(viewsets.ModelViewSet):
         )
 
     def perform_destroy(self, instance):
-        instance.is_deleted = True
-        instance.save(update_fields=["is_deleted"])
+        pk = instance.pk
+        instance.delete()
         log_action(
             user=self.request.user,
             action="delete",
             model_name="ContactMessage",
-            object_id=instance.pk,
-            description=f"Soft-deleted contact message #{instance.pk}",
+            object_id=pk,
+            description=f"Deleted contact message #{pk}",
             request=self.request
         )
 

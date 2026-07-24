@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Users, Plus, Edit, Shield, Check, X, RefreshCw, Upload, Clock, User as UserIcon } from "lucide-react";
+import { Users, Plus, Edit, Shield, Check, X, RefreshCw, Upload, Clock, User as UserIcon, Trash2 } from "lucide-react";
 import { api } from "@/lib/admin/api";
 import type { AdminUser, PaginatedResponse } from "@/types/admin";
 
@@ -16,6 +16,37 @@ export default function UsersPage() {
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [userActivity, setUserActivity] = useState<any[]>([]);
   const [loadingActivity, setLoadingActivity] = useState(false);
+  const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  useEffect(() => {
+    api.get<AdminUser>("/api/users/me/").then(setCurrentUser).catch(() => {});
+  }, []);
+
+  const handleDeleteUser = async (user: AdminUser) => {
+    if (currentUser && currentUser.id === user.id) {
+      alert("Self-deletion safeguard: You cannot delete your own active administrator account.");
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to PERMANENTLY delete user "${user.username}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    setDeletingId(user.id);
+    try {
+      await api.delete(`/api/users/${user.id}/`);
+      alert(`User "${user.username}" deleted successfully.`);
+      if (selectedUser?.id === user.id) {
+        setSelectedUser(null);
+      }
+      load();
+    } catch (err: any) {
+      alert(err.message || "Failed to delete user.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   // Form State
   const [showModal, setShowModal] = useState(false);
@@ -299,9 +330,19 @@ export default function UsersPage() {
                         </span>
                       </td>
                       <td onClick={(e) => e.stopPropagation()}>
-                        <button onClick={() => handleOpenEdit(user)} className="btn btn-outline py-1 px-3 text-xs gap-1">
-                          <Edit size={12} /> Edit
-                        </button>
+                        <div className="flex gap-2">
+                          <button onClick={() => handleOpenEdit(user)} className="btn btn-outline py-1 px-3 text-xs gap-1">
+                            <Edit size={12} /> Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteUser(user)}
+                            disabled={deletingId === user.id}
+                            className="btn btn-danger py-1 px-3 text-xs gap-1"
+                            title="Delete User"
+                          >
+                            <Trash2 size={12} /> {deletingId === user.id ? "..." : "Delete"}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

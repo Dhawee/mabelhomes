@@ -27,11 +27,34 @@ User = get_user_model()
 # User Profile Receiver
 # ---------------------------------------------------------------------------
 
+from django.contrib.contenttypes.models import ContentType
+from django.db.models.signals import pre_delete, pre_save, post_save, post_delete
+from core.models import EnquiryReply
+
+
 @receiver(post_save, sender=User)
 def handle_user_profile_create(sender, instance, created, **kwargs):
     """Auto-creates UserProfile for new users."""
     if created:
         UserProfile.objects.get_or_create(user=instance)
+
+
+@receiver(pre_delete, sender=User)
+def handle_user_pre_delete(sender, instance, **kwargs):
+    """Ensures dependent UserProfile is cleanly deleted prior to User deletion."""
+    UserProfile.objects.filter(user=instance).delete()
+
+
+@receiver(pre_delete, sender=PropertyEnquiry)
+@receiver(pre_delete, sender=ServiceEnquiry)
+@receiver(pre_delete, sender=ContactMessage)
+def handle_enquiry_pre_delete(sender, instance, **kwargs):
+    """Cleanly deletes associated EnquiryReply generic relation records on enquiry deletion."""
+    try:
+        content_type = ContentType.objects.get_for_model(sender)
+        EnquiryReply.objects.filter(content_type=content_type, object_id=instance.id).delete()
+    except Exception as exc:
+        logger.warning(f"Could not clean up EnquiryReply records for {sender.__name__} #{instance.id}: {exc}")
 
 
 # ---------------------------------------------------------------------------

@@ -276,9 +276,8 @@ MABEL_CACHE_TTL = int(os.getenv("CACHE_TTL", "3600"))
 # ---------------------------------------------------------------------------
 RESEND_API_KEY = get_env_stripped("RESEND_API_KEY", "")
 FROM_EMAIL = get_env_stripped("FROM_EMAIL", get_env_stripped("DEFAULT_FROM_EMAIL", "olajumoke@mabelhomes.org"))
-ADMIN_EMAIL = get_env_stripped("ADMIN_EMAIL", "olajumoke@mabelhomes.org")
-ADMIN_EMAILS = get_env_stripped("ADMIN_EMAILS", ADMIN_EMAIL)
-ADMIN_DASHBOARD_URL = get_env_stripped("ADMIN_DASHBOARD_URL", "https://admin.mabelhomes.org")
+SITE_URL = get_env_stripped("SITE_URL", "https://mabelhomes.org")
+ADMIN_DASHBOARD_URL = get_env_stripped("ADMIN_DASHBOARD_URL", f"{SITE_URL.rstrip('/')}/admin")
 DEFAULT_FROM_EMAIL = FROM_EMAIL
 SERVER_EMAIL = FROM_EMAIL
 ADMIN_EMAIL_FROM = FROM_EMAIL

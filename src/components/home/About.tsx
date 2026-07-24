@@ -11,21 +11,22 @@ export default function About() {
           {/* Visual Collage representing Properties and Shortlets */}
           <FadeIn direction="left">
             <div className="relative">
-              <div className="relative aspect-[4/5] rounded-2xl overflow-hidden shadow-luxury-lg border border-gray-100 dark:border-white/5">
+              <div className="relative w-full aspect-[4/3] sm:aspect-[4/5] rounded-2xl overflow-hidden shadow-luxury-lg border border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-navy-dark">
                 <Image
-                  src="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=800&q=80" // Modern property interior
-                  alt="Mabel Homes Luxury Interior"
+                  src="/images/home/About Our Firm_Big.jpg"
+                  alt="Mabel Homes About Our Firm"
                   fill
-                  className="object-cover"
+                  className="object-contain sm:object-cover"
                   sizes="(max-width: 1024px) 100vw, 50vw"
+                  priority
                 />
               </div>
-              <div className="absolute -bottom-6 -right-6 w-48 h-48 rounded-2xl overflow-hidden shadow-luxury-lg hidden md:block border-2 border-white dark:border-navy">
+              <div className="absolute -bottom-6 -right-6 w-48 h-48 rounded-2xl overflow-hidden shadow-luxury-lg hidden md:block border-2 border-white dark:border-navy bg-gray-50 dark:bg-navy-dark">
                 <Image
-                  src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&q=80" // Luxury property exterior
-                  alt="Mabel Homes Premium Exterior"
+                  src="/images/home/About Our Firm_Small.jpg"
+                  alt="Mabel Homes Premium Accommodation"
                   fill
-                  className="object-cover"
+                  className="object-contain sm:object-cover"
                   sizes="192px"
                 />
               </div>

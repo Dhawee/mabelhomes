@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { Calendar, Search, RefreshCw, Printer, Send, Eye, CheckCircle, X, Mail } from "lucide-react";
+import { Calendar, Search, RefreshCw, Printer, Send, Eye, CheckCircle, X, Mail, Trash2 } from "lucide-react";
 import { api } from "@/lib/admin/api";
 import type { PropertyEnquiry, PaginatedResponse } from "@/types/admin";
 
@@ -84,6 +84,27 @@ export default function ShortletEnquiriesPage() {
       setReplyError(err.message || "Failed to send reply email.");
     } finally {
       setSendingReply(false);
+    }
+  };
+
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  const handleDeleteEnquiry = async (id: number) => {
+    if (!window.confirm(`Are you sure you want to delete shortlet enquiry #${id}? This action cannot be undone.`)) {
+      return;
+    }
+    setDeletingId(id);
+    try {
+      await api.delete(`/api/property-enquiries/${id}/`);
+      alert(`Shortlet enquiry #${id} deleted successfully.`);
+      if (selectedEnquiry?.id === id) {
+        setSelectedEnquiry(null);
+      }
+      load();
+    } catch (err: any) {
+      alert(err.message || "Failed to delete shortlet enquiry.");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -377,6 +398,14 @@ export default function ShortletEnquiriesPage() {
                             title="Print Record"
                           >
                             <Printer size={15} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteEnquiry(item.id)}
+                            disabled={deletingId === item.id}
+                            className="p-1.5 rounded hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors"
+                            title="Delete Shortlet Enquiry"
+                          >
+                            <Trash2 size={15} />
                           </button>
                         </div>
                       </td>

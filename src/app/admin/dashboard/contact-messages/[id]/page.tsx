@@ -1,8 +1,9 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
-import { ArrowLeft, MessageSquare, Send, RefreshCw } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Phone, Send, RefreshCw, Trash2, MessageSquare } from "lucide-react";
 import { api } from "@/lib/admin/api";
 import type { ContactMessage } from "@/types/admin";
 
@@ -77,6 +78,23 @@ export default function ContactMessageDetailPage({ params }: Props) {
     }
   };
 
+  const router = useRouter();
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteMessage = async () => {
+    if (!window.confirm(`Are you sure you want to PERMANENTLY delete contact message #${id}? This cannot be undone.`)) return;
+    setDeleting(true);
+    try {
+      await api.delete(`/api/contact-messages/${id}/`);
+      alert("Contact message deleted successfully.");
+      router.push("/admin/dashboard/contact-messages");
+    } catch (err: any) {
+      alert(err.message || "Failed to delete contact message.");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const handleCloseEnquiry = async () => {
     try {
       await api.patch(`/api/contact-messages/${id}/`, { status: "Closed" });
@@ -128,6 +146,14 @@ export default function ContactMessageDetailPage({ params }: Props) {
               Close Message
             </button>
           )}
+          <button
+            onClick={handleDeleteMessage}
+            disabled={deleting}
+            className="btn btn-danger py-2 text-xs gap-1"
+            title="Delete Contact Message"
+          >
+            <Trash2 size={14} /> {deleting ? "Deleting..." : "Delete"}
+          </button>
           <button onClick={loadData} className="btn btn-outline p-2" title="Refresh">
             <RefreshCw size={14} />
           </button>

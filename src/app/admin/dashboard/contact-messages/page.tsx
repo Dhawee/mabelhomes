@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { Phone, Search, RefreshCw } from "lucide-react";
+import { Phone, Search, RefreshCw, Trash2 } from "lucide-react";
 import { api } from "@/lib/admin/api";
 import type { ContactMessage, PaginatedResponse } from "@/types/admin";
 
@@ -18,6 +18,7 @@ export default function ContactMessagesPage() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -41,6 +42,22 @@ export default function ContactMessagesPage() {
   }, [page, search]);
 
   useEffect(() => { load(); }, [load]);
+
+  const handleDeleteMessage = async (id: number) => {
+    if (!window.confirm(`Are you sure you want to delete contact message #${id}? This action cannot be undone.`)) {
+      return;
+    }
+    setDeletingId(id);
+    try {
+      await api.delete(`/api/contact-messages/${id}/`);
+      alert(`Contact message #${id} deleted successfully.`);
+      load();
+    } catch (err: any) {
+      alert(err.message || "Failed to delete contact message.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   return (
     <div className="space-y-5">
@@ -126,12 +143,22 @@ export default function ContactMessagesPage() {
                       })}
                     </td>
                     <td>
-                      <Link
-                        href={`/admin/dashboard/contact-messages/${msg.id}`}
-                        className="btn btn-outline py-1 px-3 text-xs"
-                      >
-                        View
-                      </Link>
+                      <div className="flex gap-2">
+                        <Link
+                          href={`/admin/dashboard/contact-messages/${msg.id}`}
+                          className="btn btn-outline py-1 px-3 text-xs"
+                        >
+                          View
+                        </Link>
+                        <button
+                          onClick={() => handleDeleteMessage(msg.id)}
+                          disabled={deletingId === msg.id}
+                          className="btn btn-danger py-1 px-3 text-xs gap-1"
+                          title="Delete Contact Message"
+                        >
+                          <Trash2 size={12} /> {deletingId === msg.id ? "..." : "Delete"}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
